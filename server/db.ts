@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, customers, provisioningLogs, type InsertCustomer, type InsertProvisioningLog, type Customer } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,57 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+// ==================== Customer Queries ====================
+
+export async function createCustomer(data: InsertCustomer): Promise<number> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(customers).values(data);
+  return result[0].insertId;
+}
+
+export async function getCustomerByStripeSubscriptionId(subscriptionId: string): Promise<Customer | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(customers).where(eq(customers.stripeSubscriptionId, subscriptionId)).limit(1);
+  return result[0];
+}
+
+export async function getCustomerByEmail(email: string): Promise<Customer | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(customers).where(eq(customers.email, email)).limit(1);
+  return result[0];
+}
+
+export async function updateCustomer(id: number, data: Partial<InsertCustomer>): Promise<void> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  await db.update(customers).set(data).where(eq(customers.id, id));
+}
+
+export async function getAllCustomers(): Promise<Customer[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(customers).orderBy(desc(customers.createdAt)).limit(500);
+}
+
+// ==================== Provisioning Log Queries ====================
+
+export async function createProvisioningLog(data: InsertProvisioningLog): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(provisioningLogs).values(data);
+}
+
+export async function getProvisioningLogsByCustomer(customerId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(provisioningLogs).where(eq(provisioningLogs.customerId, customerId)).orderBy(desc(provisioningLogs.createdAt)).limit(50);
+}
+
+export async function getAllProvisioningLogs() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(provisioningLogs).orderBy(desc(provisioningLogs.createdAt)).limit(200);
+}

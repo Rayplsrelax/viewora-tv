@@ -1,0 +1,21 @@
+# Viewora TV - Project TODO
+
+- [x] Database schema: customers table with name, email, stripe_subscription_id, xtream credentials, status, expiry
+- [x] Database schema: provisioning_logs table for tracking API calls
+- [x] Configure Stripe secret key and webhook secret
+- [x] Configure Xtream Code API key and settings
+- [x] Configure Google Workspace SMTP credentials
+- [x] Premium landing page with Viewora TV branding (20K+ channels, 100K+ movies, 50K+ shows)
+- [x] Subscription plan cards (1-month, 3-month, 6-month, 12-month tiers)
+- [x] Stripe checkout session creation endpoint
+- [x] Stripe webhook endpoint (checkout.session.completed + invoice.paid)
+- [x] Automatic Xtream Code API provisioning on payment
+- [x] Automatic renewal handling via invoice.paid
+- [x] Transactional email delivery via Google Workspace SMTP (info@rayallcompany.business)
+- [x] Customer database tracking (name, email, stripe ID, credentials, status, expiry)
+- [x] Role-gated admin panel (admin-only access)
+- [x] Admin panel: customer list with status, credentials, renewal history
+- [x] Elegant, premium visual design throughout
+- [x] Vitest tests for webhook and provisioning logic
+- [x] Admin panel: renewal/provisioning history dialog (logs per customer)
+- [x] Fix admin panel expiry column to use subscriptionEnd field

@@ -1,28 +1,69 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { z } from "zod";
+import { createCheckoutSession, PLANS } from "./stripe-checkout";
+import { getAllCustomers, getProvisioningLogsByCustomer, getAllProvisioningLogs } from "./db";
+import { TRPCError } from "@trpc/server";
+
+const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  if (ctx.user.role !== "admin") {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  }
+  return next({ ctx });
+});
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
-    me: publicProcedure.query(opts => opts.ctx.user),
+    me: publicProcedure.query((opts) => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
+      return { success: true } as const;
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  plans: router({
+    list: publicProcedure.query(() => {
+      return PLANS.map((p) => ({
+        id: p.id,
+        name: p.name,
+        price: p.price,
+        interval: p.interval,
+        intervalCount: p.intervalCount,
+        features: p.features,
+        popular: p.popular,
+      }));
+    }),
+  }),
+
+  checkout: router({
+    create: publicProcedure
+      .input(z.object({ planId: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const baseUrl = `${ctx.req.protocol}://${ctx.req.get("host")}`;
+        const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
+        const cancelUrl = `${baseUrl}/#pricing`;
+        const url = await createCheckoutSession(input.planId, successUrl, cancelUrl);
+        return { url };
+      }),
+  }),
+
+  admin: router({
+    customers: adminProcedure.query(async () => {
+      return getAllCustomers();
+    }),
+    customerLogs: adminProcedure
+      .input(z.object({ customerId: z.number() }))
+      .query(async ({ input }) => {
+        return getProvisioningLogsByCustomer(input.customerId);
+      }),
+    allLogs: adminProcedure.query(async () => {
+      return getAllProvisioningLogs();
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

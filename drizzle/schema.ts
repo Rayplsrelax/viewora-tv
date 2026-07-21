@@ -1,17 +1,10 @@
-import { int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { int, mysqlEnum, mysqlTable, text, timestamp, varchar, bigint } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
- * Extend this file with additional tables as your product grows.
- * Columns use camelCase to match both database fields and generated types.
  */
 export const users = mysqlTable("users", {
-  /**
-   * Surrogate primary key. Auto-incremented numeric value managed by the database.
-   * Use this for relations between tables.
-   */
   id: int("id").autoincrement().primaryKey(),
-  /** Manus OAuth identifier (openId) returned from the OAuth callback. Unique per user. */
   openId: varchar("openId", { length: 64 }).notNull().unique(),
   name: text("name"),
   email: varchar("email", { length: 320 }),
@@ -22,7 +15,52 @@ export const users = mysqlTable("users", {
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
 });
 
+/**
+ * Customers table — tracks every paying customer and their IPTV credentials.
+ */
+export const customers = mysqlTable("customers", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 320 }).notNull(),
+  name: varchar("name", { length: 255 }),
+  stripeCustomerId: varchar("stripeCustomerId", { length: 128 }),
+  stripeSubscriptionId: varchar("stripeSubscriptionId", { length: 128 }),
+  stripePriceId: varchar("stripePriceId", { length: 128 }),
+  planName: varchar("planName", { length: 64 }),
+  /** Xtream Code credentials */
+  xtreamUsername: varchar("xtreamUsername", { length: 128 }),
+  xtreamPassword: varchar("xtreamPassword", { length: 128 }),
+  xtreamUrl: text("xtreamUrl"),
+  /** Subscription status */
+  status: mysqlEnum("status", ["active", "cancelled", "expired", "pending"]).default("pending").notNull(),
+  /** Subscription dates stored as UTC timestamps (ms) */
+  subscriptionStart: bigint("subscriptionStart", { mode: "number" }),
+  subscriptionEnd: bigint("subscriptionEnd", { mode: "number" }),
+  /** Metadata */
+  country: varchar("country", { length: 8 }).default("dk"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+/**
+ * Provisioning logs — audit trail for every API call and email sent.
+ */
+export const provisioningLogs = mysqlTable("provisioning_logs", {
+  id: int("id").autoincrement().primaryKey(),
+  customerId: int("customerId"),
+  eventType: varchar("eventType", { length: 64 }).notNull(),
+  stripeEventId: varchar("stripeEventId", { length: 128 }),
+  action: varchar("action", { length: 32 }).notNull(), // 'new' | 'renew' | 'email_sent' | 'error'
+  requestPayload: text("requestPayload"),
+  responsePayload: text("responsePayload"),
+  success: int("success").default(0),
+  errorMessage: text("errorMessage"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
-
-// TODO: Add your tables here
+export type Customer = typeof customers.$inferSelect;
+export type InsertCustomer = typeof customers.$inferInsert;
+export type ProvisioningLog = typeof provisioningLogs.$inferSelect;
+export type InsertProvisioningLog = typeof provisioningLogs.$inferInsert;
