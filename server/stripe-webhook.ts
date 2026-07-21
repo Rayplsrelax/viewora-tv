@@ -319,6 +319,12 @@ export function stripeWebhookHandler(req: Request, res: Response) {
     return;
   }
 
+  // Handle test events from Stripe Dashboard
+  if (event.id && event.id.startsWith('evt_test_')) {
+    console.log("[Webhook] Test event detected, returning verification response");
+    return res.json({ verified: true });
+  }
+
   // Acknowledge immediately, process async
   res.status(200).json({ received: true });
 
