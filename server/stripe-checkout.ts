@@ -90,7 +90,6 @@ export async function createCheckoutSession(planId: string, successUrl: string, 
     },
     success_url: successUrl,
     cancel_url: cancelUrl,
-    customer_creation: "always",
     billing_address_collection: "auto",
   });
 
