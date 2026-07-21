@@ -67,7 +67,7 @@ export default function Home() {
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-zinc-400 hover:text-white transition-colors">Features</a>
             <a href="#pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">Pricing</a>
-            <a href="#how-to-watch" className="text-sm text-zinc-400 hover:text-white transition-colors">How to Watch</a>
+            <a href="/setup" className="text-sm text-zinc-400 hover:text-white transition-colors">Setup Guide</a>
             <a href="#faq" className="text-sm text-zinc-400 hover:text-white transition-colors">FAQ</a>
           </div>
           <Button
@@ -306,7 +306,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* How to Watch / Instructions Section */}
+      {/* How to Watch / Setup Section */}
       <section id="how-to-watch" className="py-24 px-6 border-t border-white/5">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
@@ -322,13 +322,12 @@ export default function Home() {
                   <Tv className="w-6 h-6 text-violet-400" />
                 </div>
                 <h3 className="text-xl font-semibold text-white mb-3">Via Streaming App</h3>
-                <p className="text-sm text-zinc-400 mb-6">Use any compatible streaming app on your device</p>
+                <p className="text-sm text-zinc-400 mb-6">Use IPTV Smarters Pro on your device</p>
                 <ol className="space-y-4">
                   {[
-                    "Download a streaming app (IPTV Smarters, TiviMate, or VLC)",
+                    "Download IPTV Smarters Pro or Smarters Player Lite",
                     "Select \"Xtream Codes\" login method",
-                    "Enter the username & password from your email",
-                    "Use server URL: http://line.viewora.space",
+                    "Enter your Username, Password, and URL from your email",
                     "Start watching 20,000+ channels instantly!",
                   ].map((step, i) => (
                     <li key={i} className="flex gap-3 text-sm">
@@ -341,8 +340,11 @@ export default function Home() {
                 </ol>
                 <div className="mt-6 pt-6 border-t border-zinc-800/50">
                   <p className="text-xs text-zinc-500 font-medium mb-2">Compatible Apps:</p>
-                  <p className="text-xs text-zinc-400">IPTV Smarters Pro, TiviMate, VLC, GSE Smart, Perfect Player, Xtream UI</p>
+                  <p className="text-xs text-zinc-400">IPTV Smarters Pro, TiviMate, VLC, GSE Smart, Perfect Player</p>
                 </div>
+                <a href="/setup" className="mt-4 inline-flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors">
+                  View full setup guide &rarr;
+                </a>
               </CardContent>
             </Card>
 
@@ -360,8 +362,8 @@ export default function Home() {
                 <ol className="space-y-4">
                   {[
                     "Open your browser on any device",
-                    "Navigate to the web player URL below",
-                    "Log in with your credentials from email",
+                    "Go to the web player URL below",
+                    "Create a playlist name and enter your Username & Password",
                     "Browse channels and start streaming!",
                   ].map((step, i) => (
                     <li key={i} className="flex gap-3 text-sm">
@@ -393,6 +395,9 @@ export default function Home() {
                   <p className="text-xs text-zinc-500 font-medium mb-2">Works on:</p>
                   <p className="text-xs text-zinc-400">Any device with a web browser — PC, Mac, iPhone, Android, tablet, Smart TV browser</p>
                 </div>
+                <a href="/setup" className="mt-4 inline-flex items-center gap-1.5 text-sm text-violet-400 hover:text-violet-300 transition-colors">
+                  View full setup guide &rarr;
+                </a>
               </CardContent>
             </Card>
           </div>

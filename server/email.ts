@@ -113,21 +113,56 @@ export async function sendCredentialsEmail(options: {
       
       <!-- Setup Instructions -->
       <div style="border-top:1px solid #2d2d44;padding-top:24px;">
-        <p style="color:#e4e4e7;font-size:14px;font-weight:600;margin:0 0 12px 0;">Quick Setup Guide:</p>
-        <ol style="color:#a1a1aa;font-size:14px;margin:0;padding-left:20px;line-height:1.8;">
-          <li>Download a streaming app (IPTV Smarters, TiviMate, or VLC)</li>
-          <li>Select "Xtream Codes" login method</li>
-          <li>Enter your username and password above</li>
-          <li>Use server URL: <span style="color:#8b5cf6;font-family:monospace;">http://${serverDomain}</span></li>
-          <li>Enjoy 20,000+ live channels!</li>
+        <p style="color:#e4e4e7;font-size:14px;font-weight:600;margin:0 0 16px 0;">📱 App Setup (IPTV Smarters Pro):</p>
+        <ol style="color:#a1a1aa;font-size:14px;margin:0 0 16px 0;padding-left:20px;line-height:2;">
+          <li>Download <strong style="color:#e4e4e7;">IPTV Smarters Pro</strong> on your device</li>
+          <li><strong style="color:#e4e4e7;">On TV/Firestick:</strong> Select "Login with Xtream Codes API"</li>
+          <li><strong style="color:#e4e4e7;">On mobile/laptop:</strong> Select "Add Your Playlist"</li>
+          <li>Enter the following details:</li>
         </ol>
+        <div style="background:#0f0f1a;border:1px solid #2d2d44;border-radius:8px;padding:16px;margin:0 0 16px 20px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr>
+              <td style="color:#71717a;font-size:12px;padding:4px 0;text-transform:uppercase;">Name</td>
+              <td style="color:#e4e4e7;font-size:13px;padding:4px 0;text-align:right;">Any name you prefer</td>
+            </tr>
+            <tr>
+              <td style="color:#71717a;font-size:12px;padding:4px 0;text-transform:uppercase;">Username</td>
+              <td style="color:#8b5cf6;font-size:13px;padding:4px 0;text-align:right;font-family:monospace;">${username}</td>
+            </tr>
+            <tr>
+              <td style="color:#71717a;font-size:12px;padding:4px 0;text-transform:uppercase;">Password</td>
+              <td style="color:#8b5cf6;font-size:13px;padding:4px 0;text-align:right;font-family:monospace;">${password}</td>
+            </tr>
+            <tr>
+              <td style="color:#71717a;font-size:12px;padding:4px 0;text-transform:uppercase;">URL</td>
+              <td style="color:#8b5cf6;font-size:13px;padding:4px 0;text-align:right;font-family:monospace;">http://${serverDomain}</td>
+            </tr>
+          </table>
+        </div>
         
-        <div style="margin-top:20px;padding:16px;background:#0f0f1a;border:1px solid #2d2d44;border-radius:12px;">
+        <p style="color:#a1a1aa;font-size:13px;margin:0 0 8px 0;">
+          <strong style="color:#e4e4e7;">Firestick users:</strong> Install the "Downloader" app first, then enter code <span style="color:#8b5cf6;font-family:monospace;">250931</span>. If that doesn't work, try <span style="color:#8b5cf6;font-family:monospace;">firesticktricks.com/smarter</span>
+        </p>
+        <p style="color:#a1a1aa;font-size:13px;margin:0 0 8px 0;">
+          <strong style="color:#e4e4e7;">iOS users:</strong> Search "Smarters Player Lite" in the App Store
+        </p>
+        <p style="color:#a1a1aa;font-size:13px;margin:0 0 20px 0;">
+          <strong style="color:#e4e4e7;">Android users:</strong> Download from <a href="https://www.iptvsmarters.com/" style="color:#8b5cf6;">iptvsmarters.com</a> or Google Play Store
+        </p>
+        
+        <div style="padding:16px;background:#0f0f1a;border:1px solid #2d2d44;border-radius:12px;margin-bottom:16px;">
           <p style="color:#e4e4e7;font-size:14px;font-weight:600;margin:0 0 8px 0;">🌐 Web Player (No App Needed)</p>
           <p style="color:#a1a1aa;font-size:13px;margin:0 0 8px 0;">
-            Stream directly in your browser on any device with internet access. Works best with a VPN.
+            Stream directly in your browser on any device. Only needs your <strong style="color:#e4e4e7;">Username</strong> and <strong style="color:#e4e4e7;">Password</strong> (no URL needed). Works best with a VPN.
           </p>
           <a href="http://162.0.216.135/playlists" style="color:#8b5cf6;font-size:13px;font-family:monospace;">http://162.0.216.135/playlists</a>
+        </div>
+
+        <div style="padding:12px;background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;">
+          <p style="color:#a1a1aa;font-size:12px;margin:0;text-align:center;">
+            📖 Need more help? Visit our <a href="https://vieworatv-jydqqkdd.manus.space/setup" style="color:#8b5cf6;">full setup guide</a> for step-by-step instructions for every device.
+          </p>
         </div>
       </div>
     </div>

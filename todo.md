@@ -26,3 +26,9 @@
 - [x] Ensure 1, 3, 6, 12 month subscription lengths are selectable
 - [x] Fix multi-device renewal logic so primary credential is not renewed twice
 - [x] Add vitest coverage for multi-device provisioning and renewal flows
+- [x] Create dedicated Setup/Instructions page with app setup guides (Firestick, iOS, Android)
+- [x] Add web player instructions (username + password only, no domain needed)
+- [x] Update credentials email with proper setup instructions referencing domain/URL
+- [x] Stripe test mode fully configured (webhook endpoint, test events, provisioning flow verified)
+- [ ] Switch to Stripe live mode (user must add live keys via Settings → Payment after Stripe KYC)
+- [x] Add route for /setup page in App.tsx
