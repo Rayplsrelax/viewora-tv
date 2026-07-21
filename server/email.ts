@@ -27,6 +27,17 @@ export async function sendCredentialsEmail(options: {
   const { to, customerName, username, password, m3uUrl, planName, expiryDate, additionalCredentials } = options;
   const greeting = customerName ? `Hi ${customerName}` : "Hi there";
 
+  // Extract domain from M3U URL (e.g. http://cf.slowgoyoyo.xyz/get.php?... → cf.slowgoyoyo.xyz)
+  let serverDomain = "";
+  try {
+    const urlObj = new URL(m3uUrl);
+    serverDomain = urlObj.hostname;
+  } catch {
+    // Fallback: try to extract from string
+    const match = m3uUrl.match(/https?:\/\/([^/]+)/);
+    if (match) serverDomain = match[1];
+  }
+
   // Build additional device credentials HTML
   let additionalCredsHtml = "";
   if (additionalCredentials && additionalCredentials.length > 0) {
@@ -82,6 +93,10 @@ export async function sendCredentialsEmail(options: {
             <td style="color:#ffffff;font-size:15px;padding:8px 0;text-align:right;font-family:monospace;">${password}</td>
           </tr>
           <tr>
+            <td style="color:#71717a;font-size:13px;padding:8px 0;text-transform:uppercase;letter-spacing:0.5px;">Server / Domain</td>
+            <td style="color:#8b5cf6;font-size:15px;padding:8px 0;text-align:right;font-family:monospace;">${serverDomain}</td>
+          </tr>
+          <tr>
             <td style="color:#71717a;font-size:13px;padding:8px 0;text-transform:uppercase;letter-spacing:0.5px;">Expires</td>
             <td style="color:#ffffff;font-size:15px;padding:8px 0;text-align:right;">${expiryDate}</td>
           </tr>
@@ -103,7 +118,7 @@ export async function sendCredentialsEmail(options: {
           <li>Download a streaming app (IPTV Smarters, TiviMate, or VLC)</li>
           <li>Select "Xtream Codes" login method</li>
           <li>Enter your username and password above</li>
-          <li>Use server URL: <span style="color:#8b5cf6;font-family:monospace;">http://line.viewora.space</span></li>
+          <li>Use server URL: <span style="color:#8b5cf6;font-family:monospace;">http://${serverDomain}</span></li>
           <li>Enjoy 20,000+ live channels!</li>
         </ol>
         
