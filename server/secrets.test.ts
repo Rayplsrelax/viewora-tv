@@ -11,7 +11,7 @@ describe("Environment secrets validation", () => {
     const url = process.env.XTREAM_API_URL;
     expect(url).toBeDefined();
     expect(url).toContain("https://");
-    expect(url).toContain("my8k.me");
+    expect(url).toContain("8k.cms-only.ru");
   });
 
   it("XTREAM_PACKAGE_ID is set", () => {
