@@ -5,7 +5,14 @@ import { createXtreamAccount, renewXtreamAccount } from "./xtream";
 import { sendCredentialsEmail, sendRenewalEmail } from "./email";
 import type { Request, Response } from "express";
 
-const stripe = new Stripe(ENV.stripeSecretKey);
+let _stripe: Stripe | null = null;
+function getStripe(): Stripe {
+  if (!_stripe) {
+    if (!ENV.stripeSecretKey) throw new Error("STRIPE_SECRET_KEY is not configured");
+    _stripe = new Stripe(ENV.stripeSecretKey);
+  }
+  return _stripe;
+}
 
 // Map price intervals to Xtream subscription months
 function getSubMonths(interval: string, intervalCount: number): number {
@@ -14,16 +21,13 @@ function getSubMonths(interval: string, intervalCount: number): number {
   return 1;
 }
 
-function getPlanName(months: number): string {
-  if (months === 1) return "1-Month Plan";
-  if (months === 3) return "3-Month Plan";
-  if (months === 6) return "6-Month Plan";
-  if (months === 12) return "12-Month Plan";
-  return `${months}-Month Plan`;
+function getPlanName(months: number, devices: number): string {
+  return `${months}-Month / ${devices} Device${devices > 1 ? "s" : ""}`;
 }
 
 /**
- * Handle new checkout session completed — provision new account.
+ * Handle new checkout session completed — provision new account(s).
+ * Multi-device plans provision multiple Xtream accounts.
  */
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const customerEmail = session.customer_details?.email || session.customer_email || "";
@@ -37,12 +41,15 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   // Get subscription details to determine plan length
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
   const priceId = subscription.items.data[0]?.price?.id || "";
   const interval = subscription.items.data[0]?.price?.recurring?.interval || "month";
   const intervalCount = subscription.items.data[0]?.price?.recurring?.interval_count || 1;
   const subMonths = getSubMonths(interval, intervalCount);
-  const planName = getPlanName(subMonths);
+
+  // Get device count from session metadata (defaults to 1)
+  const devices = parseInt(session.metadata?.devices || "1", 10);
+  const planName = getPlanName(subMonths, devices);
 
   // Check if customer already exists (avoid duplicates)
   const existing = await getCustomerByStripeSubscriptionId(subscriptionId);
@@ -51,42 +58,48 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     return;
   }
 
-  // Provision Xtream Code account
-  let xtreamUsername = "";
-  let xtreamPassword = "";
-  let xtreamUrl = "";
+  // Provision Xtream Code account(s) — one per device connection
+  const credentials: Array<{ username: string; password: string; url: string }> = [];
 
-  try {
-    const result = await createXtreamAccount({
-      sub: subMonths,
-      notes: customerEmail,
-      country: "dk",
-    });
-    xtreamUsername = result.username;
-    xtreamPassword = result.password;
-    xtreamUrl = result.url;
+  for (let i = 0; i < devices; i++) {
+    try {
+      const result = await createXtreamAccount({
+        sub: subMonths,
+        notes: `${customerEmail} (device ${i + 1}/${devices})`,
+        country: "dk",
+      });
+      credentials.push({
+        username: result.username,
+        password: result.password,
+        url: result.url,
+      });
 
-    await createProvisioningLog({
-      customerId: null,
-      eventType: "checkout.session.completed",
-      stripeEventId: session.id,
-      action: "new",
-      requestPayload: JSON.stringify({ sub: subMonths, email: customerEmail }),
-      responsePayload: JSON.stringify(result.rawResponse),
-      success: 1,
-    });
-  } catch (error: any) {
-    await createProvisioningLog({
-      customerId: null,
-      eventType: "checkout.session.completed",
-      stripeEventId: session.id,
-      action: "new",
-      requestPayload: JSON.stringify({ sub: subMonths, email: customerEmail }),
-      responsePayload: null,
-      success: 0,
-      errorMessage: error.message,
-    });
-    console.error("[Webhook] Failed to provision Xtream account:", error.message);
+      await createProvisioningLog({
+        customerId: null,
+        eventType: "checkout.session.completed",
+        stripeEventId: session.id,
+        action: "new",
+        requestPayload: JSON.stringify({ sub: subMonths, email: customerEmail, device: i + 1 }),
+        responsePayload: JSON.stringify(result.rawResponse),
+        success: 1,
+      });
+    } catch (error: any) {
+      await createProvisioningLog({
+        customerId: null,
+        eventType: "checkout.session.completed",
+        stripeEventId: session.id,
+        action: "new",
+        requestPayload: JSON.stringify({ sub: subMonths, email: customerEmail, device: i + 1 }),
+        responsePayload: null,
+        success: 0,
+        errorMessage: error.message,
+      });
+      console.error(`[Webhook] Failed to provision Xtream account (device ${i + 1}):`, error.message);
+    }
+  }
+
+  if (credentials.length === 0) {
+    console.error("[Webhook] All provisioning attempts failed, aborting");
     return;
   }
 
@@ -94,7 +107,12 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   const now = Date.now();
   const expiryMs = now + subMonths * 30 * 24 * 60 * 60 * 1000;
 
-  // Save customer to database
+  // Store primary credentials (first account) in customer record
+  // Secondary credentials stored in notes as JSON for multi-device
+  const primaryCreds = credentials[0];
+  const secondaryCreds = credentials.slice(1);
+  const allCredsJson = secondaryCreds.length > 0 ? JSON.stringify(secondaryCreds) : null;
+
   const customerId = await createCustomer({
     email: customerEmail,
     name: customerName || null,
@@ -102,39 +120,41 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     stripeSubscriptionId: subscriptionId,
     stripePriceId: priceId,
     planName,
-    xtreamUsername,
-    xtreamPassword,
-    xtreamUrl,
+    xtreamUsername: primaryCreds.username,
+    xtreamPassword: primaryCreds.password,
+    xtreamUrl: primaryCreds.url,
     status: "active",
     subscriptionStart: now,
     subscriptionEnd: expiryMs,
     country: "dk",
-    notes: null,
+    notes: allCredsJson,
   });
 
   // Store credentials in Stripe metadata for easy reference
-  await stripe.subscriptions.update(subscriptionId, {
+  await getStripe().subscriptions.update(subscriptionId, {
     metadata: {
-      xtream_username: xtreamUsername,
-      xtream_password: xtreamPassword,
+      xtream_username: primaryCreds.username,
+      xtream_password: primaryCreds.password,
+      devices: String(devices),
       viewora_customer_id: String(customerId),
     },
   });
 
-  // Send credentials email
+  // Send credentials email (includes all device credentials)
   try {
     await sendCredentialsEmail({
       to: customerEmail,
       customerName: customerName || undefined,
-      username: xtreamUsername,
-      password: xtreamPassword,
-      m3uUrl: xtreamUrl,
+      username: primaryCreds.username,
+      password: primaryCreds.password,
+      m3uUrl: primaryCreds.url,
       planName,
       expiryDate: new Date(expiryMs).toLocaleDateString("en-US", {
         year: "numeric",
         month: "long",
         day: "numeric",
       }),
+      additionalCredentials: secondaryCreds.length > 0 ? secondaryCreds : undefined,
     });
 
     await createProvisioningLog({
@@ -142,7 +162,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       eventType: "checkout.session.completed",
       stripeEventId: session.id,
       action: "email_sent",
-      requestPayload: JSON.stringify({ to: customerEmail }),
+      requestPayload: JSON.stringify({ to: customerEmail, devices }),
       responsePayload: null,
       success: 1,
     });
@@ -160,11 +180,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     console.error("[Webhook] Failed to send email:", error.message);
   }
 
-  console.log(`[Webhook] Successfully provisioned ${xtreamUsername} for ${customerEmail}`);
+  console.log(`[Webhook] Successfully provisioned ${credentials.length} account(s) for ${customerEmail}`);
 }
 
 /**
- * Handle invoice.paid — renew existing account.
+ * Handle invoice.paid — renew existing account(s).
  */
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
   const subscriptionId = (invoice as any).subscription as string;
@@ -181,12 +201,12 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   }
 
   // Determine renewal length from subscription
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
   const interval = subscription.items.data[0]?.price?.recurring?.interval || "month";
   const intervalCount = subscription.items.data[0]?.price?.recurring?.interval_count || 1;
   const subMonths = getSubMonths(interval, intervalCount);
 
-  // Renew Xtream Code account
+  // Renew primary account
   try {
     const result = await renewXtreamAccount({
       username: customer.xtreamUsername,
@@ -220,6 +240,19 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
     });
     console.error("[Webhook] Failed to renew Xtream account:", error.message);
     return;
+  }
+
+  // Renew additional device accounts if multi-device plan
+  // Notes stores only secondary credentials (not the primary, which was already renewed above)
+  if (customer.notes) {
+    try {
+      const secondaryCreds = JSON.parse(customer.notes) as Array<{ username: string; password: string }>;
+      for (const cred of secondaryCreds) {
+        await renewXtreamAccount({ username: cred.username, password: cred.password, sub: subMonths });
+      }
+    } catch {
+      // notes might not be JSON credentials, skip
+    }
   }
 
   // Update expiry in database
@@ -275,7 +308,7 @@ export function stripeWebhookHandler(req: Request, res: Response) {
   let event: Stripe.Event;
 
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       (req as any).rawBody || req.body,
       sig,
       ENV.stripeWebhookSecret

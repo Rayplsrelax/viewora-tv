@@ -19,3 +19,10 @@
 - [x] Vitest tests for webhook and provisioning logic
 - [x] Admin panel: renewal/provisioning history dialog (logs per customer)
 - [x] Fix admin panel expiry column to use subscriptionEnd field
+- [x] Fix Stripe initialization crash on deployment (guard against missing API key)
+- [x] Add web player link (http://162.0.216.135/playlists) as a supported option on any device with internet
+- [x] Remove "IPTV" wording throughout site unless referring to an app
+- [x] Redesign subscription plans: 3 options with multi-device tiers
+- [x] Ensure 1, 3, 6, 12 month subscription lengths are selectable
+- [x] Fix multi-device renewal logic so primary credential is not renewed twice
+- [x] Add vitest coverage for multi-device provisioning and renewal flows

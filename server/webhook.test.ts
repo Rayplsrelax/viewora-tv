@@ -3,25 +3,25 @@ import { PLANS } from "./stripe-checkout";
 
 // ==================== Plans Configuration Tests ====================
 describe("Plans configuration", () => {
-  it("should have 4 plans defined", () => {
-    expect(PLANS).toHaveLength(4);
+  it("should have 12 plans defined (3 tiers x 4 durations)", () => {
+    expect(PLANS).toHaveLength(12);
   });
 
   it("should have correct plan IDs", () => {
     const ids = PLANS.map((p) => p.id);
-    expect(ids).toEqual(["1-month", "3-month", "6-month", "12-month"]);
+    expect(ids).toContain("1-device-1-month");
+    expect(ids).toContain("2-device-6-month");
+    expect(ids).toContain("4-device-12-month");
   });
 
-  it("should have prices in ascending order", () => {
-    const prices = PLANS.map((p) => p.price);
-    for (let i = 1; i < prices.length; i++) {
-      expect(prices[i]).toBeGreaterThan(prices[i - 1]);
-    }
+  it("should have 3 device tiers (1, 2, 4)", () => {
+    const deviceCounts = [...new Set(PLANS.map((p) => p.devices))];
+    expect(deviceCounts.sort()).toEqual([1, 2, 4]);
   });
 
-  it("should mark 6-month plan as popular", () => {
-    const popular = PLANS.find((p) => p.popular);
-    expect(popular?.id).toBe("6-month");
+  it("should have 4 duration options (1, 3, 6, 12 months)", () => {
+    const months = [...new Set(PLANS.map((p) => p.months))];
+    expect(months.sort((a, b) => a - b)).toEqual([1, 3, 6, 12]);
   });
 
   it("should have features array for each plan", () => {
@@ -38,13 +38,13 @@ describe("Plans configuration", () => {
     }
   });
 
-  it("should have correct prices in cents", () => {
-    const planPrices: Record<string, number> = {};
-    PLANS.forEach((p) => (planPrices[p.id] = p.price));
-    expect(planPrices["1-month"]).toBe(1499);
-    expect(planPrices["3-month"]).toBe(3499);
-    expect(planPrices["6-month"]).toBe(5999);
-    expect(planPrices["12-month"]).toBe(8999);
+  it("should have correct base prices in cents", () => {
+    const p1d1 = PLANS.find((p) => p.id === "1-device-1-month");
+    const p2d6 = PLANS.find((p) => p.id === "2-device-6-month");
+    const p4d12 = PLANS.find((p) => p.id === "4-device-12-month");
+    expect(p1d1?.price).toBe(1499);
+    expect(p2d6?.price).toBe(9999);
+    expect(p4d12?.price).toBe(21999);
   });
 });
 
@@ -196,7 +196,7 @@ describe("Stripe webhook handler", () => {
 
     expect(mocks.createXtreamAccount).toHaveBeenCalledWith(expect.objectContaining({
       sub: 6,
-      notes: "buyer@example.com",
+      notes: "buyer@example.com (device 1/1)",
     }));
     expect(mocks.createCustomer).toHaveBeenCalledWith(expect.objectContaining({
       email: "buyer@example.com",
@@ -292,6 +292,138 @@ describe("Stripe webhook handler", () => {
       status: "active",
     }));
     expect(mocks.sendRenewalEmail).toHaveBeenCalled();
+  });
+});
+
+describe("Multi-device provisioning and renewal", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+
+    mocks.createCustomer.mockResolvedValue(1);
+    mocks.getCustomerByStripeSubscriptionId.mockResolvedValue(undefined);
+    mocks.updateCustomer.mockResolvedValue(undefined);
+    mocks.createProvisioningLog.mockResolvedValue(undefined);
+    mocks.sendCredentialsEmail.mockResolvedValue(undefined);
+    mocks.sendRenewalEmail.mockResolvedValue(undefined);
+    mocks.subscriptionsRetrieve.mockResolvedValue({
+      items: {
+        data: [{
+          price: { id: "price_test", recurring: { interval: "month", interval_count: 6 } },
+        }],
+      },
+    });
+    mocks.subscriptionsUpdate.mockResolvedValue({});
+    mocks.renewXtreamAccount.mockResolvedValue({
+      success: true,
+      rawResponse: { status: "true", messasge: "M3U renew successful" },
+    });
+  });
+
+  it("should provision 2 Xtream accounts for 2-device plan", async () => {
+    let callCount = 0;
+    mocks.createXtreamAccount.mockImplementation(async () => {
+      callCount++;
+      return {
+        username: `user${callCount}`,
+        password: `pass${callCount}`,
+        url: `http://m3u.example.com/get.php?username=user${callCount}&password=pass${callCount}&type=m3u_plus`,
+        rawResponse: { status: "true", user_id: "5000", message: "Add M3U successful" },
+      };
+    });
+
+    mocks.constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          customer_details: { email: "multi@example.com", name: "Multi User" },
+          subscription: "sub_multi2",
+          customer: "cus_multi2",
+          id: "cs_multi2",
+          metadata: { devices: "2", months: "6" },
+        },
+      },
+    });
+
+    const { stripeWebhookHandler } = await import("./stripe-webhook");
+    const req = { headers: { "stripe-signature": "valid" }, body: "raw", rawBody: "raw" } as any;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+
+    stripeWebhookHandler(req, res);
+    await new Promise((r) => setTimeout(r, 500));
+
+    // Should provision exactly 2 accounts
+    expect(mocks.createXtreamAccount).toHaveBeenCalledTimes(2);
+    expect(mocks.createXtreamAccount).toHaveBeenCalledWith(expect.objectContaining({
+      notes: "multi@example.com (device 1/2)",
+    }));
+    expect(mocks.createXtreamAccount).toHaveBeenCalledWith(expect.objectContaining({
+      notes: "multi@example.com (device 2/2)",
+    }));
+
+    // Primary credentials stored in customer record
+    expect(mocks.createCustomer).toHaveBeenCalledWith(expect.objectContaining({
+      xtreamUsername: "user1",
+      xtreamPassword: "pass1",
+    }));
+    // Verify secondary credentials stored in notes as JSON
+    const createCustomerCall = mocks.createCustomer.mock.calls[0][0];
+    const parsedNotes = JSON.parse(createCustomerCall.notes);
+    expect(parsedNotes).toHaveLength(1);
+    expect(parsedNotes[0].username).toBe("user2");
+    expect(parsedNotes[0].password).toBe("pass2");
+
+    // Email should include additional credentials
+    expect(mocks.sendCredentialsEmail).toHaveBeenCalledWith(expect.objectContaining({
+      username: "user1",
+      password: "pass1",
+    }));
+    const emailCall = mocks.sendCredentialsEmail.mock.calls[0][0];
+    expect(emailCall.additionalCredentials).toHaveLength(1);
+    expect(emailCall.additionalCredentials[0].username).toBe("user2");
+  });
+
+  it("should renew all device accounts without duplicating primary", async () => {
+    // Customer has secondary credentials in notes
+    mocks.getCustomerByStripeSubscriptionId.mockResolvedValue({
+      id: 10,
+      email: "multi@example.com",
+      name: "Multi User",
+      xtreamUsername: "primary_user",
+      xtreamPassword: "primary_pass",
+      planName: "6-Month / 2 Devices",
+      notes: JSON.stringify([{ username: "secondary_user", password: "secondary_pass" }]),
+    });
+
+    mocks.constructEvent.mockReturnValue({
+      type: "invoice.paid",
+      data: {
+        object: {
+          subscription: "sub_multi_renew",
+          billing_reason: "subscription_cycle",
+          id: "inv_multi_renew",
+        },
+      },
+    });
+
+    const { stripeWebhookHandler } = await import("./stripe-webhook");
+    const req = { headers: { "stripe-signature": "valid" }, body: "raw", rawBody: "raw" } as any;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+
+    stripeWebhookHandler(req, res);
+    await new Promise((r) => setTimeout(r, 500));
+
+    // Should renew exactly 2 accounts: primary + 1 secondary
+    expect(mocks.renewXtreamAccount).toHaveBeenCalledTimes(2);
+    expect(mocks.renewXtreamAccount).toHaveBeenCalledWith(expect.objectContaining({
+      username: "primary_user",
+      password: "primary_pass",
+      sub: 6,
+    }));
+    expect(mocks.renewXtreamAccount).toHaveBeenCalledWith(expect.objectContaining({
+      username: "secondary_user",
+      password: "secondary_pass",
+      sub: 6,
+    }));
   });
 });
 

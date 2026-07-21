@@ -12,7 +12,7 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
- * Send IPTV credentials to the customer after successful payment.
+ * Send streaming credentials to the customer after successful payment.
  */
 export async function sendCredentialsEmail(options: {
   to: string;
@@ -22,9 +22,30 @@ export async function sendCredentialsEmail(options: {
   m3uUrl: string;
   planName: string;
   expiryDate: string;
+  additionalCredentials?: Array<{ username: string; password: string; url: string }>;
 }): Promise<void> {
-  const { to, customerName, username, password, m3uUrl, planName, expiryDate } = options;
+  const { to, customerName, username, password, m3uUrl, planName, expiryDate, additionalCredentials } = options;
   const greeting = customerName ? `Hi ${customerName}` : "Hi there";
+
+  // Build additional device credentials HTML
+  let additionalCredsHtml = "";
+  if (additionalCredentials && additionalCredentials.length > 0) {
+    additionalCredsHtml = additionalCredentials.map((cred, i) => `
+      <div style="background:#0f0f1a;border:1px solid #2d2d44;border-radius:12px;padding:24px;margin-bottom:16px;">
+        <p style="color:#8b5cf6;font-size:13px;font-weight:600;margin:0 0 12px 0;">Device ${i + 2} Credentials</p>
+        <table style="width:100%;border-collapse:collapse;">
+          <tr>
+            <td style="color:#71717a;font-size:13px;padding:6px 0;text-transform:uppercase;letter-spacing:0.5px;">Username</td>
+            <td style="color:#ffffff;font-size:15px;padding:6px 0;text-align:right;font-family:monospace;">${cred.username}</td>
+          </tr>
+          <tr>
+            <td style="color:#71717a;font-size:13px;padding:6px 0;text-transform:uppercase;letter-spacing:0.5px;">Password</td>
+            <td style="color:#ffffff;font-size:15px;padding:6px 0;text-align:right;font-family:monospace;">${cred.password}</td>
+          </tr>
+        </table>
+      </div>
+    `).join("");
+  }
 
   const html = `
 <!DOCTYPE html>
@@ -48,8 +69,9 @@ export async function sendCredentialsEmail(options: {
         Your <strong style="color:#8b5cf6;">${planName}</strong> subscription is now active. Here are your streaming credentials:
       </p>
       
-      <!-- Credentials Box -->
-      <div style="background:#0f0f1a;border:1px solid #2d2d44;border-radius:12px;padding:24px;margin-bottom:24px;">
+      <!-- Primary Credentials Box -->
+      <div style="background:#0f0f1a;border:1px solid #2d2d44;border-radius:12px;padding:24px;margin-bottom:16px;">
+        ${additionalCredentials && additionalCredentials.length > 0 ? '<p style="color:#8b5cf6;font-size:13px;font-weight:600;margin:0 0 12px 0;">Device 1 Credentials</p>' : ''}
         <table style="width:100%;border-collapse:collapse;">
           <tr>
             <td style="color:#71717a;font-size:13px;padding:8px 0;text-transform:uppercase;letter-spacing:0.5px;">Username</td>
@@ -66,6 +88,8 @@ export async function sendCredentialsEmail(options: {
         </table>
       </div>
       
+      ${additionalCredsHtml}
+      
       <!-- M3U URL -->
       <div style="background:#0f0f1a;border:1px solid #2d2d44;border-radius:12px;padding:16px;margin-bottom:24px;">
         <p style="color:#71717a;font-size:12px;margin:0 0 8px 0;text-transform:uppercase;letter-spacing:0.5px;">M3U Playlist URL</p>
@@ -76,12 +100,20 @@ export async function sendCredentialsEmail(options: {
       <div style="border-top:1px solid #2d2d44;padding-top:24px;">
         <p style="color:#e4e4e7;font-size:14px;font-weight:600;margin:0 0 12px 0;">Quick Setup Guide:</p>
         <ol style="color:#a1a1aa;font-size:14px;margin:0;padding-left:20px;line-height:1.8;">
-          <li>Download an IPTV player (IPTV Smarters, TiviMate, or VLC)</li>
+          <li>Download a streaming app (IPTV Smarters, TiviMate, or VLC)</li>
           <li>Select "Xtream Codes" login method</li>
           <li>Enter your username and password above</li>
           <li>Use server URL: <span style="color:#8b5cf6;font-family:monospace;">http://line.viewora.space</span></li>
           <li>Enjoy 20,000+ live channels!</li>
         </ol>
+        
+        <div style="margin-top:20px;padding:16px;background:#0f0f1a;border:1px solid #2d2d44;border-radius:12px;">
+          <p style="color:#e4e4e7;font-size:14px;font-weight:600;margin:0 0 8px 0;">🌐 Web Player (No App Needed)</p>
+          <p style="color:#a1a1aa;font-size:13px;margin:0 0 8px 0;">
+            Stream directly in your browser on any device with internet access. Works best with a VPN.
+          </p>
+          <a href="http://162.0.216.135/playlists" style="color:#8b5cf6;font-size:13px;font-family:monospace;">http://162.0.216.135/playlists</a>
+        </div>
       </div>
     </div>
     

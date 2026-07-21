@@ -29,12 +29,16 @@ export const appRouter = router({
     list: publicProcedure.query(() => {
       return PLANS.map((p) => ({
         id: p.id,
-        name: p.name,
+        tierId: p.tierId,
+        tierName: p.tierName,
+        devices: p.devices,
+        tierDescription: p.tierDescription,
+        months: p.months,
+        durationLabel: p.durationLabel,
         price: p.price,
         interval: p.interval,
         intervalCount: p.intervalCount,
         features: p.features,
-        popular: p.popular,
       }));
     }),
   }),
