@@ -66,7 +66,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       const result = await createXtreamAccount({
         sub: subMonths,
         notes: `${customerEmail} (device ${i + 1}/${devices})`,
-        country: "dk",
+        country: "US",
       });
       credentials.push({
         username: result.username,
@@ -126,7 +126,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     status: "active",
     subscriptionStart: now,
     subscriptionEnd: expiryMs,
-    country: "dk",
+    country: "US",
     notes: allCredsJson,
   });
 
