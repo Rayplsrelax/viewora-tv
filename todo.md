@@ -32,3 +32,4 @@
 - [x] Stripe test mode fully configured (webhook endpoint, test events, provisioning flow verified)
 - [ ] Switch to Stripe live mode (user must add live keys via Settings → Payment after Stripe KYC)
 - [x] Add route for /setup page in App.tsx
+- [x] Hide 3, 6, 12 month subscription options — only show 1 month plans (credit conservation)

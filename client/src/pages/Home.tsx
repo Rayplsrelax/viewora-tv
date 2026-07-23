@@ -18,15 +18,16 @@ const fadeUp = {
 
 const DURATION_OPTIONS = [
   { months: 1, label: "1 Month" },
-  { months: 3, label: "3 Months" },
-  { months: 6, label: "6 Months" },
-  { months: 12, label: "12 Months" },
+  // Hidden for now — only offering 1-month plans to conserve credits
+  // { months: 3, label: "3 Months" },
+  // { months: 6, label: "6 Months" },
+  // { months: 12, label: "12 Months" },
 ];
 
 const TIER_ICONS = [Monitor, Users, Crown];
 
 export default function Home() {
-  const [selectedDuration, setSelectedDuration] = useState(6);
+  const [selectedDuration, setSelectedDuration] = useState(1);
   const plansQuery = trpc.plans.list.useQuery();
   const checkoutMutation = trpc.checkout.create.useMutation({
     onSuccess: (data) => {
@@ -212,29 +213,31 @@ export default function Home() {
             <p className="text-zinc-400 text-lg max-w-xl mx-auto">All plans include full access to every channel, movie, and show. No hidden fees.</p>
           </div>
 
-          {/* Duration Toggle */}
-          <div className="flex justify-center mb-12">
-            <div className="inline-flex bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-1.5 gap-1">
-              {DURATION_OPTIONS.map((dur) => (
-                <button
-                  key={dur.months}
-                  onClick={() => setSelectedDuration(dur.months)}
-                  className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    selectedDuration === dur.months
-                      ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20"
-                      : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
-                  }`}
-                >
-                  {dur.label}
-                  {dur.months >= 6 && (
-                    <span className="ml-1.5 text-[10px] text-violet-300 font-semibold">
-                      SAVE {dur.months === 6 ? "33" : "50"}%
-                    </span>
-                  )}
-                </button>
-              ))}
+          {/* Duration Toggle - hidden when only 1 option */}
+          {DURATION_OPTIONS.length > 1 && (
+            <div className="flex justify-center mb-12">
+              <div className="inline-flex bg-zinc-900/80 border border-zinc-800/50 rounded-xl p-1.5 gap-1">
+                {DURATION_OPTIONS.map((dur) => (
+                  <button
+                    key={dur.months}
+                    onClick={() => setSelectedDuration(dur.months)}
+                    className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      selectedDuration === dur.months
+                        ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-md shadow-violet-500/20"
+                        : "text-zinc-400 hover:text-white hover:bg-zinc-800/50"
+                    }`}
+                  >
+                    {dur.label}
+                    {dur.months >= 6 && (
+                      <span className="ml-1.5 text-[10px] text-violet-300 font-semibold">
+                        SAVE {dur.months === 6 ? "33" : "50"}%
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Plan Cards */}
           <div className="grid md:grid-cols-3 gap-6">
