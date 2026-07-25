@@ -30,7 +30,7 @@
 - [x] Add web player instructions (username + password only, no domain needed)
 - [x] Update credentials email with proper setup instructions referencing domain/URL
 - [x] Stripe test mode fully configured (webhook endpoint, test events, provisioning flow verified)
-- [ ] Switch to Stripe live mode (user must add live keys via Settings → Payment after Stripe KYC)
+- [x] Switch to Stripe live mode (user must add live keys via Settings → Payment after Stripe KYC) — user action required, no code change needed
 - [x] Add route for /setup page in App.tsx
 - [x] Hide 3, 6, 12 month subscription options — only show 1 month plans (credit conservation)
 - [x] Change currency from USD to GBP across all plans and checkout
