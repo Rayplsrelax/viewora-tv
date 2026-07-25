@@ -58,9 +58,31 @@ export const provisioningLogs = mysqlTable("provisioning_logs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 
+/**
+ * Analytics events — tracks user actions for funnel analysis.
+ */
+export const analyticsEvents = mysqlTable("analytics_events", {
+  id: int("id").autoincrement().primaryKey(),
+  event: varchar("event", { length: 64 }).notNull(),
+  page: varchar("page", { length: 255 }),
+  planId: varchar("planId", { length: 64 }),
+  referrer: text("referrer"),
+  utmSource: varchar("utmSource", { length: 128 }),
+  utmMedium: varchar("utmMedium", { length: 128 }),
+  utmCampaign: varchar("utmCampaign", { length: 128 }),
+  utmContent: varchar("utmContent", { length: 128 }),
+  sessionId: varchar("sessionId", { length: 64 }),
+  userAgent: text("userAgent"),
+  ip: varchar("ip", { length: 64 }),
+  metadata: text("metadata"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Customer = typeof customers.$inferSelect;
 export type InsertCustomer = typeof customers.$inferInsert;
 export type ProvisioningLog = typeof provisioningLogs.$inferSelect;
 export type InsertProvisioningLog = typeof provisioningLogs.$inferInsert;
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+export type InsertAnalyticsEvent = typeof analyticsEvents.$inferInsert;

@@ -33,3 +33,27 @@
 - [ ] Switch to Stripe live mode (user must add live keys via Settings → Payment after Stripe KYC)
 - [x] Add route for /setup page in App.tsx
 - [x] Hide 3, 6, 12 month subscription options — only show 1 month plans (credit conservation)
+- [x] Change currency from USD to GBP across all plans and checkout
+- [x] Remove any money-back guarantee / refund claims from site
+- [x] Add no-refund policy language before checkout
+- [x] Remove old brand references (TVPrime8K, TVPrime4K, etc.) — none found
+- [x] Fix product offer numbers to 20K channels / 100K movies / 50K shows consistently
+- [x] Add Terms of Service page
+- [x] Add Privacy Policy page
+- [x] Add Refund Policy page (no refunds after credential delivery)
+- [x] Add Contact/Support page
+- [x] Add Telegram support CTA throughout site (https://t.me/+EbGpQ2NZyhhhMzYx)
+- [x] Add WhatsApp support CTA throughout site (https://chat.whatsapp.com/DzL8dDYSjOTE3j59PKP0qf)
+- [x] Add event tracking system (internal events table + admin view)
+- [x] Track: page_view, view_pricing, click_buy_plan, begin_checkout, purchase_success, telegram_click, whatsapp_click, setup_guide_click, web_player_click
+- [x] Capture UTM parameters (source, medium, campaign, content) and referrer
+- [x] Compliance cleanup: remove risky wording (specific network names, bypass claims)
+- [x] Add disclaimers (service availability, quality depends on internet, user responsibility)
+- [x] Create/improve success page after payment
+- [x] Add Telegram support link to credentials email
+- [ ] Organize plans in admin (1 Connection, 2 Connection, Multi-Connection categories)
+- [ ] Provide DNS/custom domain setup instructions for vieworatv.live
+- [x] Wire trpc.analytics.track into frontend pages (Home, Setup, Success, Contact)
+- [x] Capture UTM params and referrer from URL on frontend and pass to tracking
+- [x] Add analytics summary/recent-events UI to Admin page
+- [x] Fix RefundPolicy.tsx soft guarantee wording

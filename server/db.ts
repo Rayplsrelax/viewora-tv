@@ -1,6 +1,6 @@
 import { eq, desc } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users, customers, provisioningLogs, type InsertCustomer, type InsertProvisioningLog, type Customer } from "../drizzle/schema";
+import { InsertUser, users, customers, provisioningLogs, analyticsEvents, type InsertCustomer, type InsertProvisioningLog, type Customer, type InsertAnalyticsEvent } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -142,4 +142,60 @@ export async function getAllProvisioningLogs() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(provisioningLogs).orderBy(desc(provisioningLogs.createdAt)).limit(200);
+}
+
+// ==================== Analytics Queries ====================
+
+export async function trackEvent(data: Omit<InsertAnalyticsEvent, "id" | "createdAt">): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  try {
+    await db.insert(analyticsEvents).values(data);
+  } catch (error) {
+    console.warn("[Analytics] Failed to track event:", error);
+  }
+}
+
+export async function getAnalyticsSummary() {
+  const db = await getDb();
+  if (!db) return { totalEvents: 0, todayEvents: 0, topEvents: [], topPages: [] };
+  
+  const allEvents = await db.select().from(analyticsEvents).orderBy(desc(analyticsEvents.createdAt)).limit(1000);
+  
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayEvents = allEvents.filter(e => e.createdAt && new Date(e.createdAt) >= today);
+  
+  // Count by event type
+  const eventCounts: Record<string, number> = {};
+  allEvents.forEach(e => {
+    eventCounts[e.event] = (eventCounts[e.event] || 0) + 1;
+  });
+  const topEvents = Object.entries(eventCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([event, count]) => ({ event, count }));
+  
+  // Count by page
+  const pageCounts: Record<string, number> = {};
+  allEvents.forEach(e => {
+    if (e.page) pageCounts[e.page] = (pageCounts[e.page] || 0) + 1;
+  });
+  const topPages = Object.entries(pageCounts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([page, count]) => ({ page, count }));
+  
+  return {
+    totalEvents: allEvents.length,
+    todayEvents: todayEvents.length,
+    topEvents,
+    topPages,
+  };
+}
+
+export async function getRecentEvents(limit: number = 50) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(analyticsEvents).orderBy(desc(analyticsEvents.createdAt)).limit(limit);
 }

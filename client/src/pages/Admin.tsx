@@ -22,6 +22,8 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  BarChart3,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -48,6 +50,15 @@ export default function Admin() {
   const customersQuery = trpc.admin.customers.useQuery(undefined, {
     enabled: isAuthenticated && user?.role === "admin",
   });
+
+  const analyticsQuery = trpc.admin.analyticsSummary.useQuery(undefined, {
+    enabled: isAuthenticated && user?.role === "admin",
+  });
+
+  const recentEventsQuery = trpc.admin.recentEvents.useQuery(
+    { limit: 20 },
+    { enabled: isAuthenticated && user?.role === "admin" }
+  );
 
   if (loading) {
     return (
@@ -211,6 +222,92 @@ export default function Admin() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Analytics Summary */}
+        {analyticsQuery.data && (
+          <Card className="bg-zinc-900/50 border-zinc-800/50 mb-8">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <BarChart3 className="w-5 h-5 text-violet-400" />
+                <h2 className="text-lg font-semibold text-white">Analytics</h2>
+                <Badge variant="outline" className="border-zinc-700 text-zinc-400 ml-2">
+                  {analyticsQuery.data.totalEvents} total events
+                </Badge>
+                <Badge variant="outline" className="border-green-500/30 text-green-400 ml-1">
+                  {analyticsQuery.data.todayEvents} today
+                </Badge>
+              </div>
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-sm font-medium text-zinc-400 mb-3 flex items-center gap-1.5">
+                    <Eye className="w-3.5 h-3.5" /> Top Events
+                  </h3>
+                  <div className="space-y-2">
+                    {analyticsQuery.data.topEvents.map((e: any) => (
+                      <div key={e.event} className="flex items-center justify-between text-sm">
+                        <span className="text-zinc-300 font-mono text-xs">{e.event}</span>
+                        <span className="text-zinc-500">{e.count}</span>
+                      </div>
+                    ))}
+                    {analyticsQuery.data.topEvents.length === 0 && (
+                      <p className="text-xs text-zinc-500">No events tracked yet</p>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-zinc-400 mb-3">Top Pages</h3>
+                  <div className="space-y-2">
+                    {analyticsQuery.data.topPages.map((p: any) => (
+                      <div key={p.page} className="flex items-center justify-between text-sm">
+                        <span className="text-zinc-300">{p.page}</span>
+                        <span className="text-zinc-500">{p.count}</span>
+                      </div>
+                    ))}
+                    {analyticsQuery.data.topPages.length === 0 && (
+                      <p className="text-xs text-zinc-500">No page views yet</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Recent Events */}
+        {recentEventsQuery.data && recentEventsQuery.data.length > 0 && (
+          <Card className="bg-zinc-900/50 border-zinc-800/50 mb-8">
+            <CardContent className="p-0">
+              <div className="p-6 border-b border-zinc-800/50 flex items-center gap-2">
+                <Eye className="w-4 h-4 text-violet-400" />
+                <h2 className="text-lg font-semibold text-white">Recent Events</h2>
+              </div>
+              <ScrollArea className="max-h-[300px]">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="border-zinc-800/50 hover:bg-transparent">
+                      <TableHead className="text-zinc-400">Event</TableHead>
+                      <TableHead className="text-zinc-400">Page</TableHead>
+                      <TableHead className="text-zinc-400">Session</TableHead>
+                      <TableHead className="text-zinc-400">Source</TableHead>
+                      <TableHead className="text-zinc-400">Time</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {recentEventsQuery.data.map((ev: any, i: number) => (
+                      <TableRow key={i} className="border-zinc-800/50">
+                        <TableCell className="font-mono text-xs text-zinc-300">{ev.event}</TableCell>
+                        <TableCell className="text-xs text-zinc-400">{ev.page || "-"}</TableCell>
+                        <TableCell className="text-xs text-zinc-500 font-mono">{ev.sessionId?.slice(0, 8) || "-"}</TableCell>
+                        <TableCell className="text-xs text-zinc-400">{ev.utmSource || ev.referrer?.slice(0, 30) || "-"}</TableCell>
+                        <TableCell className="text-xs text-zinc-500">{ev.createdAt ? new Date(ev.createdAt).toLocaleString() : "-"}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Customer Table */}
         <Card className="bg-zinc-900/50 border-zinc-800/50">

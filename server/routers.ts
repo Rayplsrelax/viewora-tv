@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { createCheckoutSession, PLANS } from "./stripe-checkout";
-import { getAllCustomers, getProvisioningLogsByCustomer, getAllProvisioningLogs } from "./db";
+import { getAllCustomers, getProvisioningLogsByCustomer, getAllProvisioningLogs, trackEvent, getAnalyticsSummary, getRecentEvents } from "./db";
 import { TRPCError } from "@trpc/server";
 
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -55,6 +55,28 @@ export const appRouter = router({
       }),
   }),
 
+  analytics: router({
+    track: publicProcedure
+      .input(z.object({
+        event: z.string(),
+        page: z.string().optional(),
+        planId: z.string().optional(),
+        referrer: z.string().optional(),
+        utmSource: z.string().optional(),
+        utmMedium: z.string().optional(),
+        utmCampaign: z.string().optional(),
+        utmContent: z.string().optional(),
+        sessionId: z.string().optional(),
+        metadata: z.string().optional(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const userAgent = ctx.req.get("user-agent") || "";
+        const ip = ctx.req.get("x-forwarded-for") || ctx.req.ip || "";
+        await trackEvent({ ...input, userAgent, ip });
+        return { success: true };
+      }),
+  }),
+
   admin: router({
     customers: adminProcedure.query(async () => {
       return getAllCustomers();
@@ -67,6 +89,14 @@ export const appRouter = router({
     allLogs: adminProcedure.query(async () => {
       return getAllProvisioningLogs();
     }),
+    analyticsSummary: adminProcedure.query(async () => {
+      return getAnalyticsSummary();
+    }),
+    recentEvents: adminProcedure
+      .input(z.object({ limit: z.number().min(1).max(200).default(50) }))
+      .query(async ({ input }) => {
+        return getRecentEvents(input.limit);
+      }),
   }),
 });
 

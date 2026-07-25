@@ -3,8 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Play, Tv, Globe, Shield, Smartphone, Monitor, ArrowLeft, ExternalLink, Download } from "lucide-react";
 import { Link } from "wouter";
+import { usePageView } from "@/hooks/useAnalytics";
 
 export default function Setup() {
+  usePageView("setup");
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white">
       {/* Navigation */}

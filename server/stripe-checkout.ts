@@ -69,7 +69,7 @@ export async function createCheckoutSession(planId: string, successUrl: string, 
     line_items: [
       {
         price_data: {
-          currency: "usd",
+          currency: "gbp",
           product_data: {
             name: `Viewora TV — ${plan.tierName} (${plan.durationLabel})`,
             description: `Premium streaming subscription: ${plan.devices} device${plan.devices > 1 ? "s" : ""}, ${plan.durationLabel.toLowerCase()} billing`,

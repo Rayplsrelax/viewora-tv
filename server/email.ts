@@ -169,10 +169,13 @@ export async function sendCredentialsEmail(options: {
     
     <!-- Footer -->
     <div style="text-align:center;padding-top:16px;">
-      <p style="color:#52525b;font-size:12px;margin:0;">
-        Need help? Reply to this email or visit our support page.
-      </p>
-      <p style="color:#3f3f46;font-size:11px;margin-top:12px;">
+      <p style="color:#a1a1aa;font-size:13px;margin:0 0 12px 0;">Need help setting up? Contact our support team:</p>
+      <div style="margin-bottom:16px;">
+        <a href="https://t.me/+EbGpQ2NZyhhhMzYx" style="display:inline-block;padding:8px 16px;background:#1e3a5f;color:#93c5fd;border-radius:8px;text-decoration:none;font-size:13px;margin:0 4px;">Telegram</a>
+        <a href="https://chat.whatsapp.com/DzL8dDYSjOTE3j59PKP0qf" style="display:inline-block;padding:8px 16px;background:#14532d;color:#86efac;border-radius:8px;text-decoration:none;font-size:13px;margin:0 4px;">WhatsApp</a>
+        <a href="mailto:info@rayallcompany.business" style="display:inline-block;padding:8px 16px;background:#27272a;color:#a1a1aa;border-radius:8px;text-decoration:none;font-size:13px;margin:0 4px;">Email</a>
+      </div>
+      <p style="color:#3f3f46;font-size:11px;margin:0;">
         &copy; ${new Date().getFullYear()} Viewora TV. All rights reserved.
       </p>
     </div>

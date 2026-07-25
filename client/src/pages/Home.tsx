@@ -3,9 +3,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Tv, Film, Zap, Shield, Globe, Headphones, Check, Play, Star, Monitor, Users, Crown } from "lucide-react";
+import { Tv, Film, Zap, Shield, Globe, Headphones, Check, Play, Star, Monitor, Users, Crown, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
+import { useAnalytics, usePageView } from "@/hooks/useAnalytics";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -27,6 +28,8 @@ const DURATION_OPTIONS = [
 const TIER_ICONS = [Monitor, Users, Crown];
 
 export default function Home() {
+  usePageView("home");
+  const { track } = useAnalytics();
   const [selectedDuration, setSelectedDuration] = useState(1);
   const plansQuery = trpc.plans.list.useQuery();
   const checkoutMutation = trpc.checkout.create.useMutation({
@@ -49,6 +52,7 @@ export default function Home() {
   }, [plansQuery.data, selectedDuration]);
 
   const handleSubscribe = (planId: string) => {
+    track("click_buy_plan", { planId });
     checkoutMutation.mutate({ planId });
   };
 
@@ -272,11 +276,11 @@ export default function Home() {
                     </div>
 
                     <div className="mb-6">
-                      <span className="text-4xl font-bold text-white">${(plan.price / 100).toFixed(2)}</span>
+                      <span className="text-4xl font-bold text-white">£{(plan.price / 100).toFixed(2)}</span>
                       <span className="text-zinc-500 ml-1">/{plan.months > 1 ? `${plan.months}mo` : "mo"}</span>
                       {plan.months > 1 && (
                         <p className="text-xs text-zinc-500 mt-1">
-                          ${(plan.price / 100 / plan.months).toFixed(2)}/mo effective
+                          £{(plan.price / 100 / plan.months).toFixed(2)}/mo effective
                         </p>
                       )}
                     </div>
@@ -299,12 +303,41 @@ export default function Home() {
                       onClick={() => handleSubscribe(plan.id)}
                       disabled={checkoutMutation.isPending}
                     >
-                      {checkoutMutation.isPending ? "Processing..." : "Subscribe Now"}
+                      {checkoutMutation.isPending ? "Processing..." : "Get Started"}
                     </Button>
                   </CardContent>
                 </Card>
               );
             })}
+          </div>
+          {/* No-refund notice */}
+          <p className="text-center text-xs text-zinc-500 mt-8">All sales are final once credentials are delivered. <a href="/refund-policy" className="text-violet-400 hover:underline">Refund Policy</a></p>
+
+          {/* Support CTAs */}
+          <div className="mt-12 text-center">
+            <p className="text-sm text-zinc-400 mb-4">Need setup help? Our support team is here for you.</p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <a
+                href="https://t.me/+EbGpQ2NZyhhhMzYx"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-blue-500/10 border border-blue-500/30 text-blue-400 text-sm hover:bg-blue-500/20 transition-colors"
+                onClick={() => track("telegram_click", { page: "home" })}
+              >
+                <MessageCircle className="w-4 h-4" />
+                Telegram Support
+              </a>
+              <a
+                href="https://chat.whatsapp.com/DzL8dDYSjOTE3j59PKP0qf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400 text-sm hover:bg-green-500/20 transition-colors"
+                onClick={() => track("whatsapp_click", { page: "home" })}
+              >
+                <MessageCircle className="w-4 h-4" />
+                WhatsApp Support
+              </a>
+            </div>
           </div>
         </div>
       </section>
@@ -385,6 +418,7 @@ export default function Home() {
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-violet-400 text-sm font-mono hover:text-violet-300 transition-colors break-all"
+                    onClick={() => track("web_player_click", { page: "home" })}
                   >
                     http://162.0.216.135/playlists
                   </a>
@@ -420,7 +454,8 @@ export default function Home() {
               { q: "What are multi-connection plans?", a: "Multi-connection plans let you stream on multiple devices simultaneously. A 2-connection plan gives you 2 separate sets of credentials so two people can watch different things at the same time. A 4-connection plan supports up to 4 simultaneous streams — perfect for families." },
               { q: "How does the web player work?", a: "The web player lets you stream directly in your browser without downloading any app. Just visit the web player URL, log in with your credentials, and start watching. It works on any device with internet access and is best used with a VPN." },
               { q: "What payment methods do you accept?", a: "We accept all major credit cards, debit cards, and Apple Pay through our secure Stripe payment processor. All transactions are encrypted and secure." },
-              { q: "Is there a free trial?", a: "We don't offer free trials, but all plans come with a satisfaction guarantee. If you experience any issues, our support team will work with you to resolve them." },
+              { q: "Is there a free trial?", a: "We don't currently offer free trials. All sales are final once access credentials are delivered. If you need help setting up, contact our support team on Telegram or WhatsApp and we'll help you get connected." },
+              { q: "What is your refund policy?", a: "All sales are final once access credentials are delivered or activated. Please make sure your device and internet connection are compatible before purchase. If you need help setting up, contact support and we will help you get connected." },
             ].map((item, i) => (
               <div key={i} className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-6 hover:border-zinc-700/50 transition-colors">
                 <h3 className="text-base font-semibold text-white mb-2">{item.q}</h3>
@@ -441,10 +476,11 @@ export default function Home() {
             <span className="text-sm font-semibold">Viewora<span className="text-violet-400">TV</span></span>
           </div>
           <p className="text-xs text-zinc-500">&copy; {new Date().getFullYear()} Viewora TV. All rights reserved.</p>
-          <div className="flex items-center gap-6">
-            <a href="#" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Privacy Policy</a>
-            <a href="#" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Terms of Service</a>
-            <a href="mailto:info@rayallcompany.business" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Contact</a>
+          <div className="flex items-center gap-6 flex-wrap justify-center">
+            <a href="/privacy" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Privacy Policy</a>
+            <a href="/terms" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Terms of Service</a>
+            <a href="/refund-policy" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Refund Policy</a>
+            <a href="/contact" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Contact</a>
           </div>
         </div>
       </footer>

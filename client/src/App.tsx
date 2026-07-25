@@ -8,6 +8,10 @@ import Home from "./pages/Home";
 import Success from "./pages/Success";
 import Admin from "./pages/Admin";
 import Setup from "./pages/Setup";
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
+import RefundPolicy from "./pages/RefundPolicy";
+import Contact from "./pages/Contact";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -17,6 +21,10 @@ function Router() {
       <Route path={"/success"} component={Success} />
       <Route path={"/admin"} component={Admin} />
       <Route path={"/setup"} component={Setup} />
+      <Route path={"/terms"} component={Terms} />
+      <Route path={"/privacy"} component={Privacy} />
+      <Route path={"/refund-policy"} component={RefundPolicy} />
+      <Route path={"/contact"} component={Contact} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
