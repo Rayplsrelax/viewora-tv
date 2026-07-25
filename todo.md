@@ -91,3 +91,14 @@
 - [x] Create /affiliate page with referral info and rules
 - [x] Wire ref code capture from URL into cookie/localStorage and checkout metadata
 - [x] Verification: full flow test and final report (38 tests passing)
+
+## Hermes System Fixes
+- [x] Fix Stripe checkout referral conversion (link referral_code from metadata to referral record on successful payment)
+- [x] Fix trial-to-paid conversion tracking (when a trial lead subscribes, update trial_lead status and create hermes_event)
+- [x] Fix 14-day active affiliate validation (only count referrals where customer stayed active 14+ days)
+- [x] Fix automatic service credit creation (auto-create service_credit when a referral qualifies at 14 days)
+- [x] Fix 3-referral free-month logic (auto-create free_month credit when affiliate reaches 3 qualifying referrals)
+- [x] Fix Stripe metadata attribution (pass user email, name, referral_code into checkout session metadata properly)
+- [x] Fix payment failed/cancel follow-up channel selection (use customer's preferred_support_channel from trial_lead or default to telegram)
+- [x] Pass customer email into Stripe checkout session (customer_email field) for better attribution
+- [x] Add regression tests for referral conversion and trial-to-paid tracking in webhook

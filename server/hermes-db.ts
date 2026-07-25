@@ -1,11 +1,12 @@
 import { eq, desc, and, lte, sql } from "drizzle-orm";
 import { getDb } from "./db";
 import {
-  trialLeads, followUpTasks, hermesEvents, affiliates, referrals, serviceCredits,
+  trialLeads, followUpTasks, hermesEvents, affiliates, referrals, serviceCredits, customers,
   type InsertTrialLead, type InsertFollowUpTask, type InsertHermesEvent,
   type InsertAffiliate, type InsertReferral, type InsertServiceCredit,
   type TrialLead, type FollowUpTask, type Affiliate, type Referral, type ServiceCredit
 } from "../drizzle/schema";
+import { HERMES_TEMPLATES } from "./hermes-templates";
 
 // ==================== Trial Leads ====================
 
@@ -215,6 +216,168 @@ export async function getServiceCreditsByAffiliate(affiliateId: number): Promise
   const db = await getDb();
   if (!db) return [];
   return db.select().from(serviceCredits).where(eq(serviceCredits.affiliateId, affiliateId)).orderBy(desc(serviceCredits.createdAt)).limit(100);
+}
+
+// ==================== Referral Validation & Rewards ====================
+
+/**
+ * Get referrals with status='purchased' that are eligible for 14-day validation.
+ * A referral qualifies when the linked customer's subscriptionStart + 14 days <= now.
+ */
+export async function getReferralsPendingValidation(): Promise<Referral[]> {
+  const db = await getDb();
+  if (!db) return [];
+  const fourteenDaysMs = 14 * 24 * 60 * 60 * 1000;
+  const cutoff = Date.now() - fourteenDaysMs;
+  // Get referrals in 'purchased' status with a linked customer
+  const purchasedReferrals = await db.select().from(referrals)
+    .where(and(
+      eq(referrals.status, "purchased"),
+      sql`${referrals.customerId} IS NOT NULL`
+    ))
+    .limit(200);
+  
+  if (purchasedReferrals.length === 0) return [];
+  
+  // Check each referral's customer subscription start
+  const qualified: Referral[] = [];
+  for (const ref of purchasedReferrals) {
+    if (!ref.customerId) continue;
+    const cust = await db.select().from(customers).where(eq(customers.id, ref.customerId)).limit(1);
+    if (cust[0] && cust[0].status === "active" && cust[0].subscriptionStart && cust[0].subscriptionStart <= cutoff) {
+      qualified.push(ref);
+    }
+  }
+  return qualified;
+}
+
+/**
+ * Get the count of fully-qualified referrals (active_14_days or beyond) for an affiliate.
+ */
+export async function getQualifiedReferralCount(affiliateId: number): Promise<number> {
+  const db = await getDb();
+  if (!db) return 0;
+  const result = await db.select({ count: sql<number>`COUNT(*)` })
+    .from(referrals)
+    .where(and(
+      eq(referrals.affiliateId, affiliateId),
+      sql`${referrals.status} IN ('active_14_days', 'credit_due', 'credit_applied')`
+    ));
+  return result[0]?.count ?? 0;
+}
+
+/**
+ * Get a referral by its referral code and customer ID.
+ */
+export async function getReferralByCodeAndCustomer(code: string, customerId: number): Promise<Referral | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(referrals)
+    .where(and(
+      eq(referrals.referralCode, code),
+      eq(referrals.customerId, customerId)
+    ))
+    .limit(1);
+  return result[0];
+}
+
+/**
+ * Validate a single referral that has been active 14+ days.
+ * Creates service credit, updates referral status, and checks free-month threshold.
+ * Returns true if validation was performed.
+ */
+export async function validateAndRewardReferral(referral: Referral): Promise<boolean> {
+  if (referral.status !== "purchased" || !referral.customerId) return false;
+  
+  // Update referral status to active_14_days
+  await updateReferral(referral.id, { status: "active_14_days" });
+  
+  // Create service credit for the affiliate
+  const creditId = await createServiceCredit({
+    affiliateId: referral.affiliateId,
+    customerId: referral.customerId,
+    referralId: referral.id,
+    creditType: "renewal_credit_manual",
+    creditValueGbp: 500, // £5.00 credit
+    status: "pending",
+    notes: `Auto-created: referral #${referral.id} qualified after 14 days active`,
+  });
+  
+  // Create hermes event
+  await createHermesEvent({
+    eventType: "referral.qualified",
+    source: "hermes",
+    payloadJson: JSON.stringify({
+      referralId: referral.id,
+      affiliateId: referral.affiliateId,
+      customerId: referral.customerId,
+      creditId,
+    }),
+  });
+  
+  // Create follow-up task to notify the affiliate
+  await createFollowUpTask({
+    taskType: "affiliate_reward",
+    relatedAffiliateId: referral.affiliateId,
+    relatedCustomerId: referral.customerId,
+    dueAt: Date.now(),
+    priority: "normal",
+    channel: "telegram",
+    status: "queued",
+    messageTemplateKey: "affiliate_credit_earned",
+    messageBody: HERMES_TEMPLATES.affiliate_credit_earned.body,
+  });
+  
+  // Check if affiliate has reached 3 qualifying referrals (free month threshold)
+  const qualifiedCount = await getQualifiedReferralCount(referral.affiliateId);
+  if (qualifiedCount > 0 && qualifiedCount % 3 === 0) {
+    // Award free month
+    await createServiceCredit({
+      affiliateId: referral.affiliateId,
+      creditType: "free_month_manual",
+      creditMonths: 1,
+      status: "pending",
+      notes: `Auto-created: affiliate reached ${qualifiedCount} qualifying referrals (free month milestone)`,
+    });
+    
+    await createHermesEvent({
+      eventType: "affiliate.free_month_earned",
+      source: "hermes",
+      payloadJson: JSON.stringify({
+        affiliateId: referral.affiliateId,
+        qualifiedCount,
+        milestone: qualifiedCount,
+      }),
+    });
+    
+    // Notify affiliate about free month
+    await createFollowUpTask({
+      taskType: "affiliate_reward",
+      relatedAffiliateId: referral.affiliateId,
+      dueAt: Date.now(),
+      priority: "high",
+      channel: "telegram",
+      status: "queued",
+      messageTemplateKey: "affiliate_free_month",
+      messageBody: HERMES_TEMPLATES.affiliate_free_month.body,
+    });
+  }
+  
+  return true;
+}
+
+/**
+ * Run 14-day validation on all pending referrals.
+ * Returns the number of referrals validated.
+ */
+export async function runReferralValidation(): Promise<number> {
+  const pending = await getReferralsPendingValidation();
+  let validated = 0;
+  for (const ref of pending) {
+    const result = await validateAndRewardReferral(ref);
+    if (result) validated++;
+  }
+  return validated;
 }
 
 // ==================== Hermes Daily Summary ====================

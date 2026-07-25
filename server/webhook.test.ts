@@ -78,6 +78,7 @@ vi.mock("stripe", () => ({
 vi.mock("./db", () => ({
   createCustomer: mocks.createCustomer,
   getCustomerByStripeSubscriptionId: mocks.getCustomerByStripeSubscriptionId,
+  getCustomerByEmail: vi.fn().mockResolvedValue(null),
   updateCustomer: mocks.updateCustomer,
   createProvisioningLog: mocks.createProvisioningLog,
 }));
@@ -90,6 +91,30 @@ vi.mock("./xtream", () => ({
 vi.mock("./email", () => ({
   sendCredentialsEmail: mocks.sendCredentialsEmail,
   sendRenewalEmail: mocks.sendRenewalEmail,
+}));
+
+vi.mock("./hermes-db", () => ({
+  createFollowUpTask: vi.fn().mockResolvedValue(1),
+  createHermesEvent: vi.fn().mockResolvedValue(1),
+  getTrialLeadByEmail: vi.fn().mockResolvedValue(null),
+  updateTrialLead: vi.fn().mockResolvedValue(undefined),
+  getAffiliateByCode: vi.fn().mockResolvedValue(null),
+  createReferral: vi.fn().mockResolvedValue(1),
+  updateReferral: vi.fn().mockResolvedValue(undefined),
+  getReferralByCustomerId: vi.fn().mockResolvedValue(undefined),
+  getReferralsByAffiliate: vi.fn().mockResolvedValue([]),
+  runReferralValidation: vi.fn().mockResolvedValue(0),
+}));
+
+vi.mock("./hermes-templates", () => ({
+  HERMES_TEMPLATES: {
+    payment_failed: { key: "payment_failed", body: "test" },
+    cancellation_reason_ask: { key: "cancellation_reason_ask", body: "test" },
+    winback_7day: { key: "winback_7day", body: "test" },
+    winback_21day: { key: "winback_21day", body: "test" },
+    affiliate_credit_earned: { key: "affiliate_credit_earned", body: "test" },
+    affiliate_free_month: { key: "affiliate_free_month", body: "test" },
+  },
 }));
 
 describe("Stripe webhook handler", () => {
@@ -231,6 +256,78 @@ describe("Stripe webhook handler", () => {
 
     expect(mocks.createXtreamAccount).not.toHaveBeenCalled();
     expect(mocks.createCustomer).not.toHaveBeenCalled();
+  });
+
+  it("should create referral record when checkout has referral_code in metadata", async () => {
+    const hermesDb = await import("./hermes-db");
+    (hermesDb.getAffiliateByCode as any).mockResolvedValue({ id: 5, status: "active", referralCode: "TESTREF" });
+    (hermesDb.getReferralByCustomerId as any).mockResolvedValue(undefined);
+
+    mocks.constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          customer_details: { email: "referred@example.com", name: "Referred User" },
+          subscription: "sub_ref",
+          customer: "cus_ref",
+          id: "cs_ref",
+          metadata: { referral_code: "TESTREF", devices: "1", months: "6", tier_name: "Standard" },
+        },
+      },
+    });
+
+    const { stripeWebhookHandler } = await import("./stripe-webhook");
+    const req = { headers: { "stripe-signature": "valid" }, body: "raw", rawBody: "raw" } as any;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+
+    stripeWebhookHandler(req, res);
+    await new Promise((r) => setTimeout(r, 500));
+
+    expect(hermesDb.createReferral).toHaveBeenCalledWith(expect.objectContaining({
+      affiliateId: 5,
+      referralCode: "TESTREF",
+      status: "purchased",
+    }));
+    expect(hermesDb.createHermesEvent).toHaveBeenCalledWith(expect.objectContaining({
+      eventType: "referral.converted",
+      source: "stripe",
+    }));
+  });
+
+  it("should track trial-to-paid conversion when trial lead exists", async () => {
+    const hermesDb = await import("./hermes-db");
+    (hermesDb.getTrialLeadByEmail as any).mockResolvedValue({
+      id: 7,
+      email: "trialer@example.com",
+      status: "activated",
+    });
+
+    mocks.constructEvent.mockReturnValue({
+      type: "checkout.session.completed",
+      data: {
+        object: {
+          customer_details: { email: "trialer@example.com", name: "Trial User" },
+          subscription: "sub_trial",
+          customer: "cus_trial",
+          id: "cs_trial",
+        },
+      },
+    });
+
+    const { stripeWebhookHandler } = await import("./stripe-webhook");
+    const req = { headers: { "stripe-signature": "valid" }, body: "raw", rawBody: "raw" } as any;
+    const res = { status: vi.fn().mockReturnThis(), json: vi.fn() } as any;
+
+    stripeWebhookHandler(req, res);
+    await new Promise((r) => setTimeout(r, 500));
+
+    expect(hermesDb.updateTrialLead).toHaveBeenCalledWith(7, expect.objectContaining({
+      status: "converted",
+    }));
+    expect(hermesDb.createHermesEvent).toHaveBeenCalledWith(expect.objectContaining({
+      eventType: "trial.converted",
+      source: "stripe",
+    }));
   });
 
   it("should skip invoice.paid with billing_reason subscription_create", async () => {

@@ -1,9 +1,13 @@
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
-import { createCustomer, getCustomerByStripeSubscriptionId, updateCustomer, createProvisioningLog } from "./db";
+import { createCustomer, getCustomerByStripeSubscriptionId, getCustomerByEmail, updateCustomer, createProvisioningLog } from "./db";
 import { createXtreamAccount, renewXtreamAccount } from "./xtream";
 import { sendCredentialsEmail, sendRenewalEmail } from "./email";
-import { createFollowUpTask, createHermesEvent } from "./hermes-db";
+import {
+  createFollowUpTask, createHermesEvent, getTrialLeadByEmail, updateTrialLead,
+  getAffiliateByCode, createReferral, updateReferral, getReferralByCustomerId,
+  getReferralsByAffiliate, runReferralValidation
+} from "./hermes-db";
 import { HERMES_TEMPLATES } from "./hermes-templates";
 import type { Request, Response } from "express";
 
@@ -183,6 +187,88 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   }
 
   console.log(`[Webhook] Successfully provisioned ${credentials.length} account(s) for ${customerEmail}`);
+
+  // === TRIAL-TO-PAID CONVERSION TRACKING ===
+  try {
+    const trialLead = await getTrialLeadByEmail(customerEmail);
+    if (trialLead && ["activated", "credentials_sent", "approved"].includes(trialLead.status)) {
+      await updateTrialLead(trialLead.id, {
+        status: "converted",
+        convertedCustomerId: customerId,
+        convertedSubscriptionId: subscriptionId,
+      });
+      await createHermesEvent({
+        eventType: "trial.converted",
+        source: "stripe",
+        payloadJson: JSON.stringify({
+          trialLeadId: trialLead.id,
+          customerId,
+          email: customerEmail,
+          subscriptionId,
+        }),
+      });
+      console.log(`[Webhook] Trial lead ${trialLead.id} converted to paid customer ${customerId}`);
+    }
+  } catch (e: any) {
+    console.error("[Webhook] Trial conversion tracking error:", e.message);
+  }
+
+  // === STRIPE CHECKOUT REFERRAL CONVERSION ===
+  try {
+    const referralCode = session.metadata?.referral_code;
+    if (referralCode) {
+      const affiliate = await getAffiliateByCode(referralCode);
+      if (affiliate && affiliate.status === "active") {
+        // Check if a referral already exists for this customer
+        const existingRef = await getReferralByCustomerId(customerId);
+        if (!existingRef) {
+          // Create new referral record linked to this purchase
+          await createReferral({
+            affiliateId: affiliate.id,
+            referralCode,
+            customerId,
+            stripeCustomerId,
+            subscriptionId,
+            firstPaymentAmount: subscription.items.data[0]?.price?.unit_amount || null,
+            status: "purchased",
+          });
+        } else {
+          // Update existing referral (may have been created at click/trial stage)
+          await updateReferral(existingRef.id, {
+            customerId,
+            stripeCustomerId,
+            subscriptionId,
+            firstPaymentAmount: subscription.items.data[0]?.price?.unit_amount || null,
+            status: "purchased",
+          });
+        }
+        await createHermesEvent({
+          eventType: "referral.converted",
+          source: "stripe",
+          payloadJson: JSON.stringify({
+            affiliateId: affiliate.id,
+            referralCode,
+            customerId,
+            email: customerEmail,
+            subscriptionId,
+          }),
+        });
+        console.log(`[Webhook] Referral conversion recorded for affiliate ${affiliate.id}, code: ${referralCode}`);
+      }
+    }
+  } catch (e: any) {
+    console.error("[Webhook] Referral conversion error:", e.message);
+  }
+
+  // === RUN 14-DAY REFERRAL VALIDATION (opportunistic) ===
+  try {
+    const validated = await runReferralValidation();
+    if (validated > 0) {
+      console.log(`[Webhook] Validated ${validated} referral(s) that passed 14-day threshold`);
+    }
+  } catch (e: any) {
+    console.error("[Webhook] Referral validation error:", e.message);
+  }
 }
 
 /**
@@ -324,13 +410,17 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
 
   // Create Hermes follow-up task for payment failure
   try {
+    // Determine preferred channel from trial lead record (fallback to telegram)
+    const trialLead = await getTrialLeadByEmail(customer.email);
+    const preferredChannel = trialLead?.preferredSupportChannel || "telegram";
+
     await createFollowUpTask({
       taskType: "payment_failed",
       relatedCustomerId: customer.id,
       relatedSubscriptionId: subscriptionId,
       dueAt: Date.now(),
       priority: "urgent",
-      channel: "email",
+      channel: preferredChannel,
       status: "queued",
       messageTemplateKey: "payment_failed",
       messageBody: HERMES_TEMPLATES.payment_failed.body,
@@ -338,7 +428,7 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
     await createHermesEvent({
       eventType: "payment.failed",
       source: "stripe",
-      payloadJson: JSON.stringify({ customerId: customer.id, email: customer.email, subscriptionId }),
+      payloadJson: JSON.stringify({ customerId: customer.id, email: customer.email, subscriptionId, channel: preferredChannel }),
     });
   } catch (e: any) {
     console.error("[Webhook] Failed to create Hermes payment_failed task:", e.message);
@@ -409,6 +499,10 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   // Create Hermes winback follow-up tasks
   try {
     const now = Date.now();
+    // Determine preferred channel from trial lead record (fallback to telegram)
+    const trialLead = await getTrialLeadByEmail(customer.email);
+    const preferredChannel = trialLead?.preferredSupportChannel || "telegram";
+
     // 1. Cancellation reason ask (immediate)
     await createFollowUpTask({
       taskType: "cancellation_reason",
@@ -416,7 +510,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       relatedSubscriptionId: subscriptionId,
       dueAt: now,
       priority: "high",
-      channel: "email",
+      channel: preferredChannel,
       status: "queued",
       messageTemplateKey: "cancellation_reason_ask",
       messageBody: HERMES_TEMPLATES.cancellation_reason_ask.body,
@@ -428,7 +522,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       relatedSubscriptionId: subscriptionId,
       dueAt: now + 7 * 24 * 60 * 60 * 1000,
       priority: "normal",
-      channel: "email",
+      channel: preferredChannel,
       status: "queued",
       messageTemplateKey: "winback_7day",
       messageBody: HERMES_TEMPLATES.winback_7day.body,
@@ -440,7 +534,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       relatedSubscriptionId: subscriptionId,
       dueAt: now + 21 * 24 * 60 * 60 * 1000,
       priority: "low",
-      channel: "email",
+      channel: preferredChannel,
       status: "queued",
       messageTemplateKey: "winback_21day",
       messageBody: HERMES_TEMPLATES.winback_21day.body,
@@ -448,7 +542,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     await createHermesEvent({
       eventType: "subscription.cancelled",
       source: "stripe",
-      payloadJson: JSON.stringify({ customerId: customer.id, email: customer.email, subscriptionId }),
+      payloadJson: JSON.stringify({ customerId: customer.id, email: customer.email, subscriptionId, channel: preferredChannel }),
     });
   } catch (e: any) {
     console.error("[Webhook] Failed to create Hermes winback tasks:", e.message);

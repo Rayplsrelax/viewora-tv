@@ -46,12 +46,12 @@ export const appRouter = router({
 
   checkout: router({
     create: publicProcedure
-      .input(z.object({ planId: z.string(), referralCode: z.string().optional() }))
+      .input(z.object({ planId: z.string(), referralCode: z.string().optional(), email: z.string().email().optional() }))
       .mutation(async ({ input, ctx }) => {
         const baseUrl = `${ctx.req.protocol}://${ctx.req.get("host")}`;
         const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
         const cancelUrl = `${baseUrl}/#pricing`;
-        const url = await createCheckoutSession(input.planId, successUrl, cancelUrl, input.referralCode);
+        const url = await createCheckoutSession(input.planId, successUrl, cancelUrl, input.referralCode, input.email);
         return { url };
       }),
     portal: publicProcedure

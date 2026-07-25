@@ -118,6 +118,7 @@ vi.mock("stripe", () => ({
 vi.mock("./db", () => ({
   createCustomer: hermesMocks.createCustomer,
   getCustomerByStripeSubscriptionId: hermesMocks.getCustomerByStripeSubscriptionId,
+  getCustomerByEmail: vi.fn().mockResolvedValue(null),
   updateCustomer: hermesMocks.updateCustomer,
   createProvisioningLog: hermesMocks.createProvisioningLog,
 }));
@@ -135,6 +136,14 @@ vi.mock("./email", () => ({
 vi.mock("./hermes-db", () => ({
   createFollowUpTask: hermesMocks.createFollowUpTask,
   createHermesEvent: hermesMocks.createHermesEvent,
+  getTrialLeadByEmail: vi.fn().mockResolvedValue(null),
+  updateTrialLead: vi.fn().mockResolvedValue(undefined),
+  getAffiliateByCode: vi.fn().mockResolvedValue(null),
+  createReferral: vi.fn().mockResolvedValue(1),
+  updateReferral: vi.fn().mockResolvedValue(undefined),
+  getReferralByCustomerId: vi.fn().mockResolvedValue(undefined),
+  getReferralsByAffiliate: vi.fn().mockResolvedValue([]),
+  runReferralValidation: vi.fn().mockResolvedValue(0),
 }));
 
 describe("Winback task creation on subscription cancellation", () => {

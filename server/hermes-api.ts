@@ -11,6 +11,7 @@ import {
   getPendingServiceCredits, updateServiceCredit,
   getAllAffiliates, getAffiliateByCode,
   getAllTrialLeads, updateTrialLead,
+  runReferralValidation, getReferralsPendingValidation,
 } from "./hermes-db";
 
 const hermesApiRouter = Router();
@@ -210,6 +211,26 @@ hermesApiRouter.get("/trials", async (_req: Request, res: Response) => {
   try {
     const trials = await getAllTrialLeads();
     res.json({ trials });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/admin/hermes/validate-referrals — run 14-day referral validation
+hermesApiRouter.post("/validate-referrals", async (_req: Request, res: Response) => {
+  try {
+    const validated = await runReferralValidation();
+    res.json({ success: true, validated, message: `Validated ${validated} referral(s)` });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// GET /api/admin/hermes/referrals/pending-validation — list referrals awaiting 14-day check
+hermesApiRouter.get("/referrals/pending-validation", async (_req: Request, res: Response) => {
+  try {
+    const pending = await getReferralsPendingValidation();
+    res.json({ pending, count: pending.length });
   } catch (e: any) {
     res.status(500).json({ error: e.message });
   }
