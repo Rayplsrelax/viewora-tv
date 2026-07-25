@@ -102,3 +102,9 @@
 - [x] Fix payment failed/cancel follow-up channel selection (use customer's preferred_support_channel from trial_lead or default to telegram)
 - [x] Pass customer email into Stripe checkout session (customer_email field) for better attribution
 - [x] Add regression tests for referral conversion and trial-to-paid tracking in webhook
+
+## Hide Affiliate Marketing (until user says start)
+- [x] Remove /affiliate route from App.tsx (keep the page file for later)
+- [x] Remove affiliate/referral links from navigation, footer, and any visible CTAs (none found — no public links existed)
+- [x] Hide the affiliate_code field from the trial request form (already hidden — only captured silently from ?ref= URL param)
+- [x] Remove any "Refer a friend" or affiliate mentions from public-facing pages (none found on public pages)
