@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import { createCheckoutSession, PLANS, createPortalSession } from "./stripe-checkout";
+import { hermesRouter } from "./hermes-router";
 import { getAllCustomers, getProvisioningLogsByCustomer, getAllProvisioningLogs, trackEvent, getAnalyticsSummary, getRecentEvents } from "./db";
 import { TRPCError } from "@trpc/server";
 
@@ -83,6 +84,8 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  hermes: hermesRouter,
 
   admin: router({
     customers: adminProcedure.query(async () => {

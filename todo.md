@@ -69,3 +69,25 @@
 - [x] Compliance scan: removed 'Unlimited Entertainment' and 'every channel' wording
 - [x] Create SEO pages: /firestick-setup, /smart-tv-setup, /android-setup, /iphone-ipad-setup, /web-player, /fix-buffering
 - [x] Final verification: pnpm test (27 passed), TypeScript (0 errors)
+
+## Hermes Agent Operations System
+- [x] Create trial_leads table
+- [x] Create follow_up_tasks table
+- [x] Create hermes_events table
+- [x] Create affiliates table
+- [x] Create referrals table
+- [x] Create service_credits table
+- [x] Build trial request form (name, email, telegram, whatsapp, country, device_type, preferred_support_channel, affiliate_code, consent)
+- [x] Implement 10/day trial cap logic
+- [ ] Add trial CTA to homepage, pricing, setup, contact, footer
+- [x] Create follow-up task generation on trial request
+- [x] Create follow-up task generation on Stripe events (payment_failed, canceled)
+- [x] Implement winback sequence task creation (immediate, 3-day, 7-day, 21-day)
+- [x] Build affiliate/referral system with ref code capture
+- [x] Implement service credit rewards (1 referral = credit, 3 referrals = free month)
+- [x] Build Hermes admin dashboard (trials, follow-ups, subscriptions, winback, affiliates, activity)
+- [x] Create Hermes API endpoints (tasks/due, draft, mark-sent, skip, daily-summary, events, affiliate-credits-due, service-credit/apply)
+- [ ] Add HERMES_AGENT_API_KEY env var for API protection
+- [ ] Create /affiliate page with referral info and rules
+- [ ] Wire ref code capture from URL into cookie/localStorage and checkout metadata
+- [x] Verification: full flow test and final report (38 tests passing)

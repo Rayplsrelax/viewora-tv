@@ -3,6 +3,8 @@ import { ENV } from "./_core/env";
 import { createCustomer, getCustomerByStripeSubscriptionId, updateCustomer, createProvisioningLog } from "./db";
 import { createXtreamAccount, renewXtreamAccount } from "./xtream";
 import { sendCredentialsEmail, sendRenewalEmail } from "./email";
+import { createFollowUpTask, createHermesEvent } from "./hermes-db";
+import { HERMES_TEMPLATES } from "./hermes-templates";
 import type { Request, Response } from "express";
 
 let _stripe: Stripe | null = null;
@@ -319,6 +321,28 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   });
 
   console.log(`[Webhook] Marked customer ${customer.email} as past_due due to payment failure`);
+
+  // Create Hermes follow-up task for payment failure
+  try {
+    await createFollowUpTask({
+      taskType: "payment_failed",
+      relatedCustomerId: customer.id,
+      relatedSubscriptionId: subscriptionId,
+      dueAt: Date.now(),
+      priority: "urgent",
+      channel: "email",
+      status: "queued",
+      messageTemplateKey: "payment_failed",
+      messageBody: HERMES_TEMPLATES.payment_failed.body,
+    });
+    await createHermesEvent({
+      eventType: "payment.failed",
+      source: "stripe",
+      payloadJson: JSON.stringify({ customerId: customer.id, email: customer.email, subscriptionId }),
+    });
+  } catch (e: any) {
+    console.error("[Webhook] Failed to create Hermes payment_failed task:", e.message);
+  }
 }
 
 /**
@@ -381,6 +405,54 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   });
 
   console.log(`[Webhook] Cancelled subscription for ${customer.email}`);
+
+  // Create Hermes winback follow-up tasks
+  try {
+    const now = Date.now();
+    // 1. Cancellation reason ask (immediate)
+    await createFollowUpTask({
+      taskType: "cancellation_reason",
+      relatedCustomerId: customer.id,
+      relatedSubscriptionId: subscriptionId,
+      dueAt: now,
+      priority: "high",
+      channel: "email",
+      status: "queued",
+      messageTemplateKey: "cancellation_reason_ask",
+      messageBody: HERMES_TEMPLATES.cancellation_reason_ask.body,
+    });
+    // 2. Winback 7 day
+    await createFollowUpTask({
+      taskType: "winback",
+      relatedCustomerId: customer.id,
+      relatedSubscriptionId: subscriptionId,
+      dueAt: now + 7 * 24 * 60 * 60 * 1000,
+      priority: "normal",
+      channel: "email",
+      status: "queued",
+      messageTemplateKey: "winback_7day",
+      messageBody: HERMES_TEMPLATES.winback_7day.body,
+    });
+    // 3. Winback 21 day
+    await createFollowUpTask({
+      taskType: "winback",
+      relatedCustomerId: customer.id,
+      relatedSubscriptionId: subscriptionId,
+      dueAt: now + 21 * 24 * 60 * 60 * 1000,
+      priority: "low",
+      channel: "email",
+      status: "queued",
+      messageTemplateKey: "winback_21day",
+      messageBody: HERMES_TEMPLATES.winback_21day.body,
+    });
+    await createHermesEvent({
+      eventType: "subscription.cancelled",
+      source: "stripe",
+      payloadJson: JSON.stringify({ customerId: customer.id, email: customer.email, subscriptionId }),
+    });
+  } catch (e: any) {
+    console.error("[Webhook] Failed to create Hermes winback tasks:", e.message);
+  }
 }
 
 /**

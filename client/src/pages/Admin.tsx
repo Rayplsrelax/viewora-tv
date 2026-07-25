@@ -146,6 +146,14 @@ export default function Admin() {
             </Badge>
           </div>
           <div className="flex items-center gap-4">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
+              onClick={() => navigate("/admin/hermes")}
+            >
+              Hermes Agent
+            </Button>
             <span className="text-sm text-zinc-400">{user?.name || user?.email}</span>
             <Button
               variant="outline"

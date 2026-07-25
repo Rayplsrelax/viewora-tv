@@ -18,6 +18,8 @@ import IphoneSetup from "./pages/seo/IphoneSetup";
 import AndroidSetup from "./pages/seo/AndroidSetup";
 import WebPlayerSetup from "./pages/seo/WebPlayerSetup";
 import FixBuffering from "./pages/seo/FixBuffering";
+import TrialRequest from "./pages/TrialRequest";
+import HermesAdmin from "./pages/HermesAdmin";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -31,6 +33,8 @@ function Router() {
       <Route path={"/privacy"} component={Privacy} />
       <Route path={"/refund-policy"} component={RefundPolicy} />
       <Route path={"/contact"} component={Contact} />
+      <Route path="/trial" component={TrialRequest} />
+      <Route path="/admin/hermes" component={HermesAdmin} />
       {/* SEO landing pages */}
       <Route path={"/firestick-setup"} component={FirestickSetup} />
       <Route path={"/smart-tv-setup"} component={SmartTvSetup} />
