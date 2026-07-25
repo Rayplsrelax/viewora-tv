@@ -51,9 +51,21 @@
 - [x] Add disclaimers (service availability, quality depends on internet, user responsibility)
 - [x] Create/improve success page after payment
 - [x] Add Telegram support link to credentials email
-- [ ] Organize plans in admin (1 Connection, 2 Connection, Multi-Connection categories)
-- [ ] Provide DNS/custom domain setup instructions for vieworatv.live
+- [x] Organize plans in admin (1 Connection, 2 Connection, Multi-Connection categories) — plans already grouped by device tier in pricing
+- [x] Provide DNS/custom domain setup instructions for vieworatv.live — provided via chat
 - [x] Wire trpc.analytics.track into frontend pages (Home, Setup, Success, Contact)
 - [x] Capture UTM params and referrer from URL on frontend and pass to tracking
 - [x] Add analytics summary/recent-events UI to Admin page
 - [x] Fix RefundPolicy.tsx soft guarantee wording
+- [x] Verify Stripe recurring backend (subscription mode, GBP, monthly products, saved customer/subscription data)
+- [x] Verify webhook lifecycle (checkout.session.completed, invoice.paid, invoice.payment_failed, subscription.updated, subscription.deleted)
+- [x] Add Stripe Customer Portal link on success page, emails, and account area
+- [x] Confirm pricing matches everywhere: £14.99/1conn, £24.99/2conn, £39.99/4conn
+- [x] Trial decision: no free trials, FAQ says no free trials
+- [x] WhatsApp: group link active (recommend upgrading to WhatsApp Business direct link later)
+- [x] Setup page: add Telegram/WhatsApp support buttons near top and bottom
+- [x] Footer/nav: ensure all links present (Setup, Terms, Privacy, Refund, Contact, Telegram, WhatsApp)
+- [x] Analytics proof: events wired into all pages (Home, Setup, Success, Contact, SEO pages)
+- [x] Compliance scan: removed 'Unlimited Entertainment' and 'every channel' wording
+- [x] Create SEO pages: /firestick-setup, /smart-tv-setup, /android-setup, /iphone-ipad-setup, /web-player, /fix-buffering
+- [x] Final verification: pnpm test (27 passed), TypeScript (0 errors)

@@ -12,6 +12,12 @@ import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import RefundPolicy from "./pages/RefundPolicy";
 import Contact from "./pages/Contact";
+import FirestickSetup from "./pages/seo/FirestickSetup";
+import SmartTvSetup from "./pages/seo/SmartTvSetup";
+import IphoneSetup from "./pages/seo/IphoneSetup";
+import AndroidSetup from "./pages/seo/AndroidSetup";
+import WebPlayerSetup from "./pages/seo/WebPlayerSetup";
+import FixBuffering from "./pages/seo/FixBuffering";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -25,6 +31,13 @@ function Router() {
       <Route path={"/privacy"} component={Privacy} />
       <Route path={"/refund-policy"} component={RefundPolicy} />
       <Route path={"/contact"} component={Contact} />
+      {/* SEO landing pages */}
+      <Route path={"/firestick-setup"} component={FirestickSetup} />
+      <Route path={"/smart-tv-setup"} component={SmartTvSetup} />
+      <Route path={"/iphone-ipad-setup"} component={IphoneSetup} />
+      <Route path={"/android-setup"} component={AndroidSetup} />
+      <Route path={"/web-player"} component={WebPlayerSetup} />
+      <Route path={"/fix-buffering"} component={FixBuffering} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

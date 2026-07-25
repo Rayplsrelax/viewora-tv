@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Play, Tv, Globe, Shield, Smartphone, Monitor, ArrowLeft, ExternalLink, Download } from "lucide-react";
+import { Play, Tv, Globe, Shield, Smartphone, Monitor, ArrowLeft, ExternalLink, Download, MessageCircle, Send } from "lucide-react";
 import { Link } from "wouter";
 import { usePageView } from "@/hooks/useAnalytics";
 
@@ -44,6 +44,14 @@ export default function Setup() {
           <p className="text-zinc-400 text-lg max-w-2xl mx-auto">
             Follow these simple instructions to start streaming on your preferred device. Choose your method below.
           </p>
+          <div className="flex items-center justify-center gap-4 mt-6">
+            <a href="https://t.me/+EbGpQ2NZyhhhMzYx" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-[#229ED9]/10 border border-[#229ED9]/30 rounded-lg text-[#229ED9] hover:bg-[#229ED9]/20 transition-all text-sm">
+              <Send className="w-4 h-4" /> Telegram Support
+            </a>
+            <a href="https://chat.whatsapp.com/DzL8dDYSjOTE3j59PKP0qf" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-[#25D366]/10 border border-[#25D366]/30 rounded-lg text-[#25D366] hover:bg-[#25D366]/20 transition-all text-sm">
+              <MessageCircle className="w-4 h-4" /> WhatsApp Support
+            </a>
+          </div>
         </div>
       </section>
 
@@ -333,6 +341,24 @@ export default function Setup() {
             <div className="p-4 bg-zinc-900/50 border border-zinc-800/50 rounded-xl">
               <h4 className="text-sm font-semibold text-white mb-2">Need Help?</h4>
               <p className="text-xs text-zinc-400">Contact us at <a href="mailto:info@rayallcompany.business" className="text-violet-400 hover:text-violet-300">info@rayallcompany.business</a> and we'll get you set up.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Bottom Support CTA */}
+      <section className="py-12 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="p-8 bg-gradient-to-br from-violet-500/5 to-purple-600/5 border border-violet-500/20 rounded-2xl">
+            <h3 className="text-xl font-bold text-white mb-2">Still Need Help?</h3>
+            <p className="text-zinc-400 text-sm mb-6">Our support team is available to help you get set up. Reach out anytime.</p>
+            <div className="flex items-center justify-center gap-4">
+              <a href="https://t.me/+EbGpQ2NZyhhhMzYx" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#229ED9] rounded-lg text-white font-medium hover:bg-[#229ED9]/80 transition-all text-sm">
+                <Send className="w-4 h-4" /> Join Telegram
+              </a>
+              <a href="https://chat.whatsapp.com/DzL8dDYSjOTE3j59PKP0qf" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#25D366] rounded-lg text-white font-medium hover:bg-[#25D366]/80 transition-all text-sm">
+                <MessageCircle className="w-4 h-4" /> Join WhatsApp
+              </a>
             </div>
           </div>
         </div>

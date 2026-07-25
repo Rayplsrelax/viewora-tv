@@ -108,7 +108,7 @@ export default function Home() {
             variants={fadeUp}
             custom={1}
           >
-            Unlimited Entertainment.
+            Premium Streaming.
             <br />
             <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-fuchsia-400 bg-clip-text text-transparent">
               One Subscription.
@@ -214,7 +214,7 @@ export default function Home() {
         <div className="relative max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Choose Your Plan</h2>
-            <p className="text-zinc-400 text-lg max-w-xl mx-auto">All plans include full access to every channel, movie, and show. No hidden fees.</p>
+            <p className="text-zinc-400 text-lg max-w-xl mx-auto">All plans include access to thousands of live channels, movies, and shows. No hidden fees.</p>
           </div>
 
           {/* Duration Toggle - hidden when only 1 option */}
@@ -477,6 +477,7 @@ export default function Home() {
           </div>
           <p className="text-xs text-zinc-500">&copy; {new Date().getFullYear()} Viewora TV. All rights reserved.</p>
           <div className="flex items-center gap-6 flex-wrap justify-center">
+            <a href="/setup" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Setup Guide</a>
             <a href="/privacy" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Privacy Policy</a>
             <a href="/terms" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Terms of Service</a>
             <a href="/refund-policy" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Refund Policy</a>

@@ -294,6 +294,96 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 }
 
 /**
+ * Handle invoice.payment_failed — mark customer as past_due.
+ */
+async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
+  const subscriptionId = (invoice as any).subscription as string;
+  if (!subscriptionId) return;
+
+  const customer = await getCustomerByStripeSubscriptionId(subscriptionId);
+  if (!customer) {
+    console.log(`[Webhook] No customer found for failed invoice subscription ${subscriptionId}`);
+    return;
+  }
+
+  await updateCustomer(customer.id, { status: "expired" });
+
+  await createProvisioningLog({
+    customerId: customer.id,
+    eventType: "invoice.payment_failed",
+    stripeEventId: invoice.id,
+    action: "status_update",
+    requestPayload: JSON.stringify({ subscriptionId, status: "past_due" }),
+    responsePayload: null,
+    success: 1,
+  });
+
+  console.log(`[Webhook] Marked customer ${customer.email} as past_due due to payment failure`);
+}
+
+/**
+ * Handle customer.subscription.updated — sync status changes.
+ */
+async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  const subscriptionId = subscription.id;
+  const customer = await getCustomerByStripeSubscriptionId(subscriptionId);
+  if (!customer) {
+    console.log(`[Webhook] No customer found for subscription update ${subscriptionId}`);
+    return;
+  }
+
+  // Map Stripe status to our status
+  let newStatus: "active" | "cancelled" | "expired" | "pending" = "active";
+  if (subscription.status === "canceled" || subscription.status === "unpaid") {
+    newStatus = "cancelled";
+  } else if (subscription.status === "past_due" || subscription.status === "incomplete_expired") {
+    newStatus = "expired";
+  } else if (subscription.status === "incomplete" || subscription.status === "trialing") {
+    newStatus = "pending";
+  }
+
+  await updateCustomer(customer.id, { status: newStatus });
+
+  await createProvisioningLog({
+    customerId: customer.id,
+    eventType: "customer.subscription.updated",
+    stripeEventId: subscription.id,
+    action: "status_update",
+    requestPayload: JSON.stringify({ stripeStatus: subscription.status, mappedStatus: newStatus }),
+    responsePayload: null,
+    success: 1,
+  });
+
+  console.log(`[Webhook] Updated customer ${customer.email} status to ${newStatus}`);
+}
+
+/**
+ * Handle customer.subscription.deleted — cancel access.
+ */
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const subscriptionId = subscription.id;
+  const customer = await getCustomerByStripeSubscriptionId(subscriptionId);
+  if (!customer) {
+    console.log(`[Webhook] No customer found for deleted subscription ${subscriptionId}`);
+    return;
+  }
+
+  await updateCustomer(customer.id, { status: "cancelled" });
+
+  await createProvisioningLog({
+    customerId: customer.id,
+    eventType: "customer.subscription.deleted",
+    stripeEventId: subscription.id,
+    action: "status_update",
+    requestPayload: JSON.stringify({ subscriptionId, canceledAt: subscription.canceled_at }),
+    responsePayload: null,
+    success: 1,
+  });
+
+  console.log(`[Webhook] Cancelled subscription for ${customer.email}`);
+}
+
+/**
  * Express route handler for Stripe webhooks.
  * Must be registered with raw body parsing (not JSON).
  */
@@ -337,6 +427,15 @@ export function stripeWebhookHandler(req: Request, res: Response) {
           break;
         case "invoice.paid":
           await handleInvoicePaid(event.data.object as Stripe.Invoice);
+          break;
+        case "invoice.payment_failed":
+          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
+          break;
+        case "customer.subscription.updated":
+          await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
+          break;
+        case "customer.subscription.deleted":
+          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
           break;
         default:
           console.log(`[Webhook] Unhandled event type: ${event.type}`);

@@ -59,6 +59,26 @@ export const PLANS = DEVICE_TIERS.flatMap((tier) =>
 /**
  * Create a Stripe Checkout Session for a given plan.
  */
+/**
+ * Create a Stripe Customer Portal session for subscription management.
+ */
+export async function createPortalSession(customerEmail: string, returnUrl: string): Promise<string> {
+  const stripe = getStripe();
+  
+  // Find the Stripe customer by email
+  const customers = await stripe.customers.list({ email: customerEmail, limit: 1 });
+  if (customers.data.length === 0) {
+    throw new Error("No subscription found for this email. Please check the email address used during purchase.");
+  }
+  
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customers.data[0].id,
+    return_url: returnUrl,
+  });
+  
+  return session.url;
+}
+
 export async function createCheckoutSession(planId: string, successUrl: string, cancelUrl: string): Promise<string> {
   const plan = PLANS.find((p) => p.id === planId);
   if (!plan) throw new Error(`Invalid plan: ${planId}`);

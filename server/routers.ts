@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { z } from "zod";
-import { createCheckoutSession, PLANS } from "./stripe-checkout";
+import { createCheckoutSession, PLANS, createPortalSession } from "./stripe-checkout";
 import { getAllCustomers, getProvisioningLogsByCustomer, getAllProvisioningLogs, trackEvent, getAnalyticsSummary, getRecentEvents } from "./db";
 import { TRPCError } from "@trpc/server";
 
@@ -51,6 +51,13 @@ export const appRouter = router({
         const successUrl = `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`;
         const cancelUrl = `${baseUrl}/#pricing`;
         const url = await createCheckoutSession(input.planId, successUrl, cancelUrl);
+        return { url };
+      }),
+    portal: publicProcedure
+      .input(z.object({ email: z.string().email() }))
+      .mutation(async ({ input, ctx }) => {
+        const baseUrl = `${ctx.req.protocol}://${ctx.req.get("host")}`;
+        const url = await createPortalSession(input.email, baseUrl);
         return { url };
       }),
   }),

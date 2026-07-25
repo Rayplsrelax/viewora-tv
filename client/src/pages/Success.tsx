@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { CheckCircle, Mail, Play, MessageCircle, BookOpen, Globe } from "lucide-react";
+import { CheckCircle, Mail, Play, MessageCircle, BookOpen, Globe, CreditCard } from "lucide-react";
 import { useLocation } from "wouter";
 import { usePageView } from "@/hooks/useAnalytics";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
 
 export default function Success() {
   usePageView("success");
@@ -75,21 +77,34 @@ export default function Success() {
             </a>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
+              <Button
+                variant="outline"
+                className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                onClick={() => navigate("/setup")}
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Setup Guide
+              </Button>
+              <Button
+                className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white"
+                onClick={() => navigate("/")}
+              >
+                <Play className="w-4 h-4 mr-2" />
+                Back to Home
+              </Button>
+            </div>
+            <p className="text-xs text-zinc-500 text-center mt-2">Need to manage your subscription?</p>
             <Button
               variant="outline"
-              className="flex-1 border-zinc-700 text-zinc-300 hover:bg-zinc-800"
-              onClick={() => navigate("/setup")}
+              className="w-full border-zinc-700 text-zinc-400 hover:bg-zinc-800 text-xs"
+              onClick={() => {
+                toast.info("To manage your subscription, contact us via Telegram or WhatsApp.");
+              }}
             >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Setup Guide
-            </Button>
-            <Button
-              className="flex-1 bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 text-white"
-              onClick={() => navigate("/")}
-            >
-              <Play className="w-4 h-4 mr-2" />
-              Back to Home
+              <CreditCard className="w-3 h-3 mr-1" />
+              Manage Subscription
             </Button>
           </div>
         </CardContent>
