@@ -47,6 +47,29 @@ hermesApiRouter.get("/tasks", async (_req: Request, res: Response) => {
   }
 });
 
+// POST /api/admin/hermes/tasks/:id/draft
+hermesApiRouter.post("/tasks/:id/draft", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    const task = await getFollowUpTaskById(id);
+    if (!task) { res.status(404).json({ error: "Task not found" }); return; }
+
+    const messageBody = typeof req.body?.messageBody === "string" && req.body.messageBody.trim()
+      ? req.body.messageBody
+      : task.messageBody;
+    const hermesNotes = typeof req.body?.hermesNotes === "string" ? req.body.hermesNotes : undefined;
+
+    await updateFollowUpTask(id, {
+      status: "drafted",
+      messageBody,
+      hermesNotes,
+    });
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // POST /api/admin/hermes/tasks/:id/mark-sent
 hermesApiRouter.post("/tasks/:id/mark-sent", async (req: Request, res: Response) => {
   try {
@@ -127,8 +150,31 @@ hermesApiRouter.get("/credits/pending", async (_req: Request, res: Response) => 
   }
 });
 
+// Compatibility alias expected by Hermes integration docs/prompts.
+// GET /api/admin/hermes/affiliate-credits-due
+hermesApiRouter.get("/affiliate-credits-due", async (_req: Request, res: Response) => {
+  try {
+    const credits = await getPendingServiceCredits();
+    res.json({ credits });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // POST /api/admin/hermes/credits/:id/apply
 hermesApiRouter.post("/credits/:id/apply", async (req: Request, res: Response) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+    await updateServiceCredit(id, { status: "applied", appliedAt: new Date() });
+    res.json({ success: true });
+  } catch (e: any) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Compatibility alias expected by Hermes integration docs/prompts.
+// POST /api/admin/hermes/service-credit/:id/apply
+hermesApiRouter.post("/service-credit/:id/apply", async (req: Request, res: Response) => {
   try {
     const id = parseInt(req.params.id, 10);
     await updateServiceCredit(id, { status: "applied", appliedAt: new Date() });

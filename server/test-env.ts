@@ -1,0 +1,10 @@
+process.env.STRIPE_SECRET_KEY ??= "sk_test_dummy_123456789";
+process.env.STRIPE_WEBHOOK_SECRET ??= "whsec_dummy_123456789";
+process.env.XTREAM_API_KEY ??= "dummy_xtream_key_123456789";
+process.env.XTREAM_API_URL ??= "https://8k.cms-only.ru";
+process.env.XTREAM_PACKAGE_ID ??= "26826";
+process.env.SMTP_HOST ??= "smtp.gmail.com";
+process.env.SMTP_PORT ??= "587";
+process.env.SMTP_USER ??= "info@rayallcompany.business";
+process.env.SMTP_PASS ??= "dummy_smtp_pass";
+process.env.HERMES_AGENT_API_KEY ??= "dummy_hermes_key_for_tests";

@@ -51,15 +51,29 @@ id, affiliate_id, customer_id, referral_id, credit_type (stripe_customer_balance
 - Store ref in cookie/localStorage 30 days
 
 ## Hermes API Endpoints
+All REST endpoints below are protected with `HERMES_AGENT_API_KEY` via either `x-hermes-api-key: <key>` or `Authorization: Bearer <key>`.
+
+### Follow-up Tasks
 - GET /api/admin/hermes/tasks/due
+- GET /api/admin/hermes/tasks
 - POST /api/admin/hermes/tasks/:id/draft
 - POST /api/admin/hermes/tasks/:id/mark-sent
 - POST /api/admin/hermes/tasks/:id/skip
+- POST /api/admin/hermes/tasks/:id/complete
+
+### Summaries and Events
 - GET /api/admin/hermes/daily-summary
+- GET /api/admin/hermes/events
 - POST /api/admin/hermes/events
-- GET /api/admin/hermes/affiliate-credits-due
-- POST /api/admin/hermes/service-credit/:id/apply
-- Protected with admin auth or HERMES_AGENT_API_KEY
+
+### Affiliates, Trials, and Service Credits
+- GET /api/admin/hermes/affiliates
+- GET /api/admin/hermes/trials
+- GET /api/admin/hermes/credits/pending
+- GET /api/admin/hermes/affiliate-credits-due (compatibility alias)
+- POST /api/admin/hermes/credits/:id/apply
+- POST /api/admin/hermes/service-credit/:id/apply (compatibility alias)
+- POST /api/admin/hermes/credits/:id/reject
 
 ## Message Templates
 See pasted_content_3.txt for all template text (trial confirmation, waitlist, approved, 2h check, 20h reminder, expired conversion, payment failed, cancellation confirmation, 3-day reason, 7-day winback, 21-day reactivation)
