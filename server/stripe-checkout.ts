@@ -79,7 +79,7 @@ export async function createPortalSession(customerEmail: string, returnUrl: stri
   return session.url;
 }
 
-export async function createCheckoutSession(planId: string, successUrl: string, cancelUrl: string): Promise<string> {
+export async function createCheckoutSession(planId: string, successUrl: string, cancelUrl: string, referralCode?: string): Promise<string> {
   const plan = PLANS.find((p) => p.id === planId);
   if (!plan) throw new Error(`Invalid plan: ${planId}`);
 
@@ -107,6 +107,7 @@ export async function createCheckoutSession(planId: string, successUrl: string, 
       devices: String(plan.devices),
       months: String(plan.months),
       tier_name: plan.tierName,
+      ...(referralCode ? { referral_code: referralCode } : {}),
     },
     success_url: successUrl,
     cancel_url: cancelUrl,

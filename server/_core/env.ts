@@ -19,4 +19,6 @@ export const ENV = {
   smtpPort: parseInt(process.env.SMTP_PORT ?? "587", 10),
   smtpUser: process.env.SMTP_USER ?? "",
   smtpPass: process.env.SMTP_PASS ?? "",
+  // Hermes Agent
+  hermesAgentApiKey: process.env.HERMES_AGENT_API_KEY ?? "",
 };

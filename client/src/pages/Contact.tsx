@@ -125,6 +125,13 @@ export default function Contact() {
             </div>
           </div>
         </div>
+        {/* Trial CTA */}
+        <div className="mt-12 text-center p-6 bg-violet-500/5 border border-violet-500/20 rounded-xl">
+          <p className="text-sm text-zinc-400 mb-3">Want to test the service before purchasing?</p>
+          <a href="/trial" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-300 text-sm hover:bg-violet-500/20 transition-colors">
+            Request a Free Trial
+          </a>
+        </div>
       </div>
     </div>
   );

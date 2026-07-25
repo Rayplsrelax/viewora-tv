@@ -7,6 +7,7 @@ import { Tv, Film, Zap, Shield, Globe, Headphones, Check, Play, Star, Monitor, U
 import { motion } from "framer-motion";
 import { useState, useMemo } from "react";
 import { useAnalytics, usePageView } from "@/hooks/useAnalytics";
+import { getReferralCode } from "@/hooks/useReferral";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -53,7 +54,8 @@ export default function Home() {
 
   const handleSubscribe = (planId: string) => {
     track("click_buy_plan", { planId });
-    checkoutMutation.mutate({ planId });
+    const referralCode = getReferralCode() || undefined;
+    checkoutMutation.mutate({ planId, referralCode });
   };
 
   return (
@@ -140,14 +142,15 @@ export default function Home() {
             >
               Start Streaming Now
             </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-zinc-700 text-zinc-300 hover:bg-zinc-800/50 px-8 py-6 text-base"
-              onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
-            >
-              Learn More
-            </Button>
+            <a href="/trial">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10 px-8 py-6 text-base"
+              >
+                Request Free Trial
+              </Button>
+            </a>
           </motion.div>
 
           {/* Stats */}
@@ -310,8 +313,16 @@ export default function Home() {
               );
             })}
           </div>
+          {/* Trial CTA */}
+          <div className="mt-8 text-center">
+            <p className="text-sm text-zinc-400 mb-3">Not sure yet? Try before you buy.</p>
+            <a href="/trial" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-300 text-sm hover:bg-violet-500/20 transition-colors">
+              Request a Free Trial
+            </a>
+          </div>
+
           {/* No-refund notice */}
-          <p className="text-center text-xs text-zinc-500 mt-8">All sales are final once credentials are delivered. <a href="/refund-policy" className="text-violet-400 hover:underline">Refund Policy</a></p>
+          <p className="text-center text-xs text-zinc-500 mt-6">All sales are final once credentials are delivered. <a href="/refund-policy" className="text-violet-400 hover:underline">Refund Policy</a></p>
 
           {/* Support CTAs */}
           <div className="mt-12 text-center">
@@ -454,7 +465,7 @@ export default function Home() {
               { q: "What are multi-connection plans?", a: "Multi-connection plans let you stream on multiple devices simultaneously. A 2-connection plan gives you 2 separate sets of credentials so two people can watch different things at the same time. A 4-connection plan supports up to 4 simultaneous streams — perfect for families." },
               { q: "How does the web player work?", a: "The web player lets you stream directly in your browser without downloading any app. Just visit the web player URL, log in with your credentials, and start watching. It works on any device with internet access and is best used with a VPN." },
               { q: "What payment methods do you accept?", a: "We accept all major credit cards, debit cards, and Apple Pay through our secure Stripe payment processor. All transactions are encrypted and secure." },
-              { q: "Is there a free trial?", a: "We don't currently offer free trials. All sales are final once access credentials are delivered. If you need help setting up, contact our support team on Telegram or WhatsApp and we'll help you get connected." },
+              { q: "Is there a free trial?", a: "Yes! We offer limited free trials. You can request a 24-hour trial to test the service on your device before purchasing. Trials are limited to 10 per day, so request yours early. Visit vieworatv.live/trial to apply." },
               { q: "What is your refund policy?", a: "All sales are final once access credentials are delivered or activated. Please make sure your device and internet connection are compatible before purchase. If you need help setting up, contact support and we will help you get connected." },
             ].map((item, i) => (
               <div key={i} className="bg-zinc-900/50 border border-zinc-800/50 rounded-xl p-6 hover:border-zinc-700/50 transition-colors">
@@ -477,6 +488,7 @@ export default function Home() {
           </div>
           <p className="text-xs text-zinc-500">&copy; {new Date().getFullYear()} Viewora TV. All rights reserved.</p>
           <div className="flex items-center gap-6 flex-wrap justify-center">
+            <a href="/trial" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Free Trial</a>
             <a href="/setup" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Setup Guide</a>
             <a href="/privacy" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Privacy Policy</a>
             <a href="/terms" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Terms of Service</a>

@@ -20,6 +20,8 @@ import WebPlayerSetup from "./pages/seo/WebPlayerSetup";
 import FixBuffering from "./pages/seo/FixBuffering";
 import TrialRequest from "./pages/TrialRequest";
 import HermesAdmin from "./pages/HermesAdmin";
+import Affiliate from "./pages/Affiliate";
+import { useReferralCapture } from "./hooks/useReferral";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -34,6 +36,7 @@ function Router() {
       <Route path={"/refund-policy"} component={RefundPolicy} />
       <Route path={"/contact"} component={Contact} />
       <Route path="/trial" component={TrialRequest} />
+      <Route path="/affiliate" component={Affiliate} />
       <Route path="/admin/hermes" component={HermesAdmin} />
       {/* SEO landing pages */}
       <Route path={"/firestick-setup"} component={FirestickSetup} />
@@ -55,6 +58,9 @@ function Router() {
 // - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
+  // Capture ?ref= from URL on any page and persist for 30 days
+  useReferralCapture();
+
   return (
     <ErrorBoundary>
       <ThemeProvider

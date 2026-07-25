@@ -364,6 +364,16 @@ export default function Setup() {
         </div>
       </section>
 
+      {/* Trial CTA */}
+      <section className="py-8 px-6">
+        <div className="max-w-4xl mx-auto text-center">
+          <p className="text-sm text-zinc-400 mb-3">Want to test before you buy?</p>
+          <a href="/trial" className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-violet-500/10 border border-violet-500/30 text-violet-300 text-sm hover:bg-violet-500/20 transition-colors">
+            Request a Free Trial
+          </a>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="py-12 px-6 border-t border-white/5">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
@@ -375,6 +385,7 @@ export default function Setup() {
           </div>
           <p className="text-xs text-zinc-500">&copy; {new Date().getFullYear()} Viewora TV. All rights reserved.</p>
           <div className="flex items-center gap-6">
+            <a href="/trial" className="text-xs text-violet-400 hover:text-violet-300 transition-colors">Free Trial</a>
             <Link href="/" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Home</Link>
             <a href="mailto:info@rayallcompany.business" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">Contact</a>
           </div>
