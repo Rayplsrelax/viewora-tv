@@ -94,12 +94,12 @@ export default function Setup() {
                   <div className="mt-6 p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl">
                     <p className="text-xs text-zinc-500 font-medium mb-2">Web Player URL:</p>
                     <a
-                      href="http://162.0.216.135/playlists"
+                      href="https://watch.vieworatv.live"
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-violet-400 text-sm font-mono hover:text-violet-300 transition-colors break-all flex items-center gap-2"
                     >
-                      http://162.0.216.135/playlists
+                      https://watch.vieworatv.live
                       <ExternalLink className="w-3 h-3 shrink-0" />
                     </a>
                   </div>

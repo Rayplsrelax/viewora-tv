@@ -83,7 +83,7 @@ export default function FixBuffering() {
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold text-white mb-4">Solution 4: Try the Web Player</h2>
                 <p className="text-zinc-300 mb-4">If apps are giving you trouble, try our web player as an alternative. It works on any device with a browser.</p>
-                <a href="http://162.0.216.135/playlists" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/30 rounded-lg text-violet-300 hover:bg-violet-500/20 transition-all">
+                <a href="https://watch.vieworatv.live" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-violet-500/10 border border-violet-500/30 rounded-lg text-violet-300 hover:bg-violet-500/20 transition-all">
                   <Play className="w-4 h-4" /> Open Web Player
                 </a>
               </CardContent>

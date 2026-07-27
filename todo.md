@@ -108,3 +108,6 @@
 - [x] Remove affiliate/referral links from navigation, footer, and any visible CTAs (none found — no public links existed)
 - [x] Hide the affiliate_code field from the trial request form (already hidden — only captured silently from ?ref= URL param)
 - [x] Remove any "Refer a friend" or affiliate mentions from public-facing pages (none found on public pages)
+
+## Update Web Player URL
+- [x] Replace all http://162.0.216.135/playlists references with https://watch.vieworatv.live

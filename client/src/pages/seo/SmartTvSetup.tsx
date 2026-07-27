@@ -69,7 +69,7 @@ export default function SmartTvSetup() {
                 <p className="text-zinc-300 mb-4">If your TV has a web browser, you can use our web player directly:</p>
                 <ol className="space-y-3 text-zinc-300 list-decimal list-inside">
                   <li>Open the web browser on your Smart TV</li>
-                  <li>Navigate to <strong className="text-violet-300">http://162.0.216.135/playlists</strong></li>
+                  <li>Navigate to <strong className="text-violet-300">https://watch.vieworatv.live</strong></li>
                   <li>Create a playlist name and enter your Username and Password</li>
                   <li>Browse channels and start watching</li>
                 </ol>
