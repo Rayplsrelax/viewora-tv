@@ -425,13 +425,13 @@ export default function Home() {
                 <div className="mt-6 p-4 bg-zinc-800/50 border border-zinc-700/50 rounded-xl">
                   <p className="text-xs text-zinc-500 font-medium mb-2">Web Player URL:</p>
                   <a
-                    href="https://watch.vieworatv.live"
+                    href="https://watch.vieworatv.live/login"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-violet-400 text-sm font-mono hover:text-violet-300 transition-colors break-all"
                     onClick={() => track("web_player_click", { page: "home" })}
                   >
-                    https://watch.vieworatv.live
+                    https://watch.vieworatv.live/login
                   </a>
                   <p className="text-xs text-zinc-500 mt-3 flex items-center gap-1.5">
                     <Shield className="w-3 h-3" />

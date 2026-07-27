@@ -60,7 +60,7 @@ export default function IphoneSetup() {
                 <h2 className="text-xl font-bold text-white mb-4">Option 2: Web Player (No App Needed)</h2>
                 <ol className="space-y-3 text-zinc-300 list-decimal list-inside">
                   <li>Open <strong>Safari</strong> (or any browser) on your iPhone/iPad</li>
-                  <li>Go to <strong className="text-violet-300">https://watch.vieworatv.live</strong></li>
+                  <li>Go to <strong className="text-violet-300">https://watch.vieworatv.live/login</strong></li>
                   <li>Create a playlist name</li>
                   <li>Enter your <strong>Username</strong> and <strong>Password</strong> from your credentials email</li>
                   <li>Browse channels and start watching</li>

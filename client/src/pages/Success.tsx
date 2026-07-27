@@ -47,7 +47,7 @@ export default function Success() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-violet-400 font-semibold">3.</span>
-                <span>Or use the <a href="https://watch.vieworatv.live" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">Web Player</a> (username & password only, no domain needed)</span>
+                <span>Or use the <a href="https://watch.vieworatv.live/login" target="_blank" rel="noopener noreferrer" className="text-violet-400 hover:underline">Web Player</a> (username & password only, no domain needed)</span>
               </li>
             </ol>
           </div>

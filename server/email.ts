@@ -156,7 +156,7 @@ export async function sendCredentialsEmail(options: {
           <p style="color:#a1a1aa;font-size:13px;margin:0 0 8px 0;">
             Stream directly in your browser on any device. Only needs your <strong style="color:#e4e4e7;">Username</strong> and <strong style="color:#e4e4e7;">Password</strong> (no URL needed). Works best with a VPN.
           </p>
-          <a href="https://watch.vieworatv.live" style="color:#8b5cf6;font-size:13px;font-family:monospace;">https://watch.vieworatv.live</a>
+          <a href="https://watch.vieworatv.live/login" style="color:#8b5cf6;font-size:13px;font-family:monospace;">https://watch.vieworatv.live/login</a>
         </div>
 
         <div style="padding:12px;background:#1a1a2e;border:1px solid #2d2d44;border-radius:8px;">

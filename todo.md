@@ -110,4 +110,4 @@
 - [x] Remove any "Refer a friend" or affiliate mentions from public-facing pages (none found on public pages)
 
 ## Update Web Player URL
-- [x] Replace all http://162.0.216.135/playlists references with https://watch.vieworatv.live
+- [x] Replace all http://162.0.216.135/playlists references with https://watch.vieworatv.live/login (verified HTTP 200)

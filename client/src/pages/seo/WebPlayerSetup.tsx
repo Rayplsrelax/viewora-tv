@@ -38,8 +38,8 @@ export default function WebPlayerSetup() {
               <CardContent className="p-6 text-center">
                 <Globe className="w-12 h-12 text-violet-400 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold text-white mb-2">Web Player URL</h2>
-                <a href="https://watch.vieworatv.live" target="_blank" rel="noopener noreferrer" className="text-xl font-mono text-violet-300 hover:text-violet-200 underline underline-offset-4">
-                  https://watch.vieworatv.live
+                <a href="https://watch.vieworatv.live/login" target="_blank" rel="noopener noreferrer" className="text-xl font-mono text-violet-300 hover:text-violet-200 underline underline-offset-4">
+                  https://watch.vieworatv.live/login
                 </a>
                 <p className="text-zinc-400 text-sm mt-4">Works best with a VPN enabled</p>
               </CardContent>
@@ -50,7 +50,7 @@ export default function WebPlayerSetup() {
                 <h2 className="text-xl font-bold text-white mb-4">How to Use the Web Player</h2>
                 <ol className="space-y-3 text-zinc-300 list-decimal list-inside">
                   <li>Open any web browser (Chrome, Safari, Firefox, Edge, etc.)</li>
-                  <li>Navigate to <strong className="text-violet-300">https://watch.vieworatv.live</strong></li>
+                  <li>Navigate to <strong className="text-violet-300">https://watch.vieworatv.live/login</strong></li>
                   <li>Create a <strong>Playlist Name</strong> (any name you like)</li>
                   <li>Enter your <strong>Username</strong> from your credentials email</li>
                   <li>Enter your <strong>Password</strong> from your credentials email</li>
